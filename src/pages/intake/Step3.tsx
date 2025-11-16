@@ -43,9 +43,39 @@ export default function IntakeStep3() {
 
       storage.setProfileId(savedProfile.id);
 
-      const matchResult = await api.matchExperts(savedProfile.id, overview);
+      const accumulatedMatches: any[] = [];
 
-      navigate('/matches', { state: { matches: matchResult.matches, profileId: savedProfile.id } });
+      await api.matchExpertsWithStreaming(
+        savedProfile.id,
+        overview,
+        {
+          onMatch: (match) => {
+            accumulatedMatches.push(match);
+            if (accumulatedMatches.length === 3) {
+              navigate('/matches', {
+                state: {
+                  matches: [...accumulatedMatches].sort((a, b) => b.match_score - a.match_score),
+                  profileId: savedProfile.id,
+                  isStreaming: true,
+                },
+              });
+            }
+          },
+          onComplete: (matches) => {
+            navigate('/matches', {
+              state: {
+                matches: matches.sort((a, b) => b.match_score - a.match_score),
+                profileId: savedProfile.id,
+                isStreaming: false,
+              },
+            });
+          },
+          onError: (err) => {
+            setError(err.message || 'Failed to match experts. Please try again.');
+            setIsMatching(false);
+          },
+        }
+      );
     } catch (err: any) {
       setError(err.message || 'Failed to save and match. Please try again.');
       setIsMatching(false);

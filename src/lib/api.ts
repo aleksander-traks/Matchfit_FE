@@ -2,6 +2,14 @@ import { supabase } from './supabase';
 import { pythonApi } from './pythonApi';
 import { getExpertById } from '../data/expertsData';
 import { generateDummyRecommendations } from './recommendations';
+import {
+  createProfileKey,
+  getCachedOverview,
+  setCachedOverview,
+  getCachedMatches,
+  setCachedMatches,
+} from './cache';
+import { matchExpertsStreaming, StreamingMatchCallbacks } from './streaming';
 
 class ApiClient {
   async saveIntake(data: {
@@ -62,9 +70,18 @@ class ApiClient {
     injuries: string[];
     weight_goal: string;
   }) {
-    // ✅ just call the Python API and return the overview;
-    // saving to DB happens in saveIntake when user confirms
-    return pythonApi.generateOverview(data);
+    const profileKey = createProfileKey(data);
+    const cachedOverview = await getCachedOverview(profileKey);
+
+    if (cachedOverview) {
+      return { overview: cachedOverview };
+    }
+
+    const result = await pythonApi.generateOverview(data);
+
+    await setCachedOverview(profileKey, result.overview);
+
+    return result;
   }
 
   async matchExperts(clientProfileId: string, overview: string) {
@@ -91,14 +108,28 @@ class ApiClient {
       throw new Error('No experts have overview data. Please contact support.');
     }
 
-    const result = await pythonApi.matchExperts({
-      client_overview: overview,
-      experts: expertsWithOverview,
-    });
+    const expertIds = expertsWithOverview.map(e => e.id);
+    const cachedMatches = await getCachedMatches(overview, expertIds);
 
-    console.log('Python API result:', { matchesCount: result.matches?.length });
+    let matches;
+    if (cachedMatches && cachedMatches.size === expertIds.length) {
+      console.log('Using cached match results');
+      matches = expertIds.map(id => cachedMatches.get(id)!);
+    } else {
+      console.log('Calling Python API for fresh matches');
+      const result = await pythonApi.matchExperts({
+        client_overview: overview,
+        experts: expertsWithOverview,
+      });
 
-    const matchResults = result.matches.map(match => ({
+      matches = result.matches;
+
+      await setCachedMatches(overview, matches);
+    }
+
+    console.log('Match results:', { matchesCount: matches.length });
+
+    const matchResults = matches.map(match => ({
       client_profile_id: clientProfileId,
       expert_id: match.expert_id,
       match_score: match.match_score,
@@ -117,7 +148,7 @@ class ApiClient {
       throw insertError;
     }
 
-    const enrichedMatches = result.matches.map(match => {
+    const enrichedMatches = matches.map(match => {
       const expertData = getExpertById(match.expert_id);
       return {
         ...match,
@@ -130,7 +161,6 @@ class ApiClient {
     console.log('Enriched matches:', enrichedMatches);
 
     return {
-      ...result,
       matches: enrichedMatches,
     };
   }
@@ -274,6 +304,96 @@ class ApiClient {
     });
 
     return enrichedResults;
+  }
+
+  async matchExpertsWithStreaming(
+    clientProfileId: string,
+    overview: string,
+    callbacks: Omit<StreamingMatchCallbacks, 'onComplete'> & {
+      onComplete: (matches: any[]) => void;
+    }
+  ) {
+    const { data: experts, error: expertsError } = await supabase
+      .from('experts')
+      .select('id, overview');
+
+    if (expertsError) throw expertsError;
+    if (!experts || experts.length === 0) {
+      throw new Error('No experts found in database.');
+    }
+
+    const expertsWithOverview = experts
+      .filter(e => e.overview)
+      .map(e => ({ id: e.id, overview: e.overview! }));
+
+    const expertIds = expertsWithOverview.map(e => e.id);
+    const cachedMatches = await getCachedMatches(overview, expertIds);
+
+    if (cachedMatches && cachedMatches.size === expertIds.length) {
+      const matches = expertIds.map(id => cachedMatches.get(id)!);
+      const enrichedMatches = matches.map(match => {
+        const expertData = getExpertById(match.expert_id);
+        return {
+          ...match,
+          expert: expertData || null,
+          reason_1: match.reason1,
+          reason_2: match.reason2,
+        };
+      });
+
+      const matchResults = matches.map(match => ({
+        client_profile_id: clientProfileId,
+        expert_id: match.expert_id,
+        match_score: match.match_score,
+        reason_1: match.reason1,
+        reason_2: match.reason2,
+      }));
+
+      await supabase.from('match_results').upsert(matchResults);
+
+      callbacks.onComplete(enrichedMatches);
+      return;
+    }
+
+    await matchExpertsStreaming(overview, expertsWithOverview, {
+      onMatch: (match) => {
+        const expertData = getExpertById(match.expert_id);
+        const enrichedMatch = {
+          ...match,
+          expert: expertData || null,
+          reason_1: match.reason1,
+          reason_2: match.reason2,
+        };
+        callbacks.onMatch(enrichedMatch);
+      },
+      onProgress: callbacks.onProgress,
+      onError: callbacks.onError,
+      onComplete: async (matches) => {
+        await setCachedMatches(overview, matches);
+
+        const matchResults = matches.map(match => ({
+          client_profile_id: clientProfileId,
+          expert_id: match.expert_id,
+          match_score: match.match_score,
+          reason_1: match.reason1,
+          reason_2: match.reason2,
+        }));
+
+        await supabase.from('match_results').upsert(matchResults);
+
+        const enrichedMatches = matches.map(match => {
+          const expertData = getExpertById(match.expert_id);
+          return {
+            ...match,
+            expert: expertData || null,
+            reason_1: match.reason1,
+            reason_2: match.reason2,
+          };
+        });
+
+        callbacks.onComplete(enrichedMatches);
+      },
+    });
   }
 }
 

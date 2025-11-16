@@ -1,14 +1,39 @@
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Star, MapPin, Calendar, DollarSign, Award } from 'lucide-react';
+import { Star, MapPin, Calendar, DollarSign, Award, Loader2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
 
 export default function Matches() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { matches, profileId } = location.state || { matches: [], profileId: null };
+  const { matches: initialMatches, profileId, isStreaming } = location.state || { matches: [], profileId: null, isStreaming: false };
 
-  console.log('Matches page data:', { matches, profileId });
+  const [matches, setMatches] = useState(initialMatches || []);
+  const [isLoadingMore, setIsLoadingMore] = useState(isStreaming || false);
+
+  console.log('Matches page data:', { matches: initialMatches, profileId, isStreaming });
+
+  useEffect(() => {
+    if (isStreaming) {
+      const checkInterval = setInterval(async () => {
+        try {
+          const updatedMatches = await api.getMatchResults(profileId);
+          if (updatedMatches.length > matches.length) {
+            setMatches(updatedMatches);
+          }
+          if (updatedMatches.length >= 10) {
+            setIsLoadingMore(false);
+            clearInterval(checkInterval);
+          }
+        } catch (error) {
+          console.error('Error polling for matches:', error);
+        }
+      }, 2000);
+
+      return () => clearInterval(checkInterval);
+    }
+  }, [isStreaming, profileId, matches.length]);
 
   const handleChooseTrainer = async (expertId: number) => {
     try {
@@ -26,7 +51,14 @@ export default function Matches() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-neutral-900 mb-2">Your Trainer Matches</h1>
           <p className="text-neutral-600">
-            We found {matches.length} trainers that match your goals and needs
+            {isLoadingMore ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading more matches... ({matches.length} found so far)
+              </span>
+            ) : (
+              `We found ${matches.length} trainers that match your goals and needs`
+            )}
           </p>
         </div>
 
