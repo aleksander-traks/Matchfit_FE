@@ -137,7 +137,7 @@ export default function Dashboard() {
             <div className="space-y-3">
               {dashboard.matches.slice(0, 3).map((match: any) => {
                 const expert = match.experts;
-                const matchPercentage = Math.round(match.match_score * 100);
+                const matchPercentage = Math.round(match.match_score);
 
                 return (
                   <div

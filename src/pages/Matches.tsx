@@ -65,7 +65,7 @@ export default function Matches() {
         <div className="space-y-4">
           {matches.map((match: any) => {
             const expert = match.expert;
-            const matchPercentage = Math.round(match.match_score * 100);
+            const matchPercentage = Math.round(match.match_score);
 
             if (!expert) return null;
 
