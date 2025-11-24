@@ -4,15 +4,19 @@ import { useIntake } from '../../context/IntakeContext';
 import ProgressIndicator from '../../components/ProgressIndicator';
 import { api } from '../../lib/api';
 import { storage } from '../../lib/storage';
+import { useStreamingMatch } from '../../hooks/useStreamingMatch';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 
 export default function IntakeStep3() {
   const navigate = useNavigate();
-  const { intakeData, updateIntakeData, generateOverviewAsync } = useIntake();
+  const { intakeData, updateIntakeData, generateOverviewWithOpenAI } = useIntake();
+  const { startExpertMatching, matches, matchesArray, isStreaming, progress, isComplete } = useStreamingMatch();
 
   const [overview, setOverview] = useState(intakeData.overview);
   const [isMatching, setIsMatching] = useState(false);
   const [error, setError] = useState('');
+  const [savedProfileId, setSavedProfileId] = useState<string | null>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     setOverview(intakeData.overview);
@@ -20,12 +24,40 @@ export default function IntakeStep3() {
 
   useEffect(() => {
     if (!intakeData.overview && !intakeData.isGeneratingOverview && !intakeData.overviewError) {
-      generateOverviewAsync();
+      generateOverviewWithOpenAI();
     }
   }, []);
 
+  useEffect(() => {
+    if (isComplete && !isNavigating && savedProfileId) {
+      setIsNavigating(true);
+      navigate('/matches', {
+        state: {
+          matches: matchesArray,
+          profileId: savedProfileId,
+          isStreaming: false,
+        },
+      });
+    }
+  }, [isComplete, matchesArray, savedProfileId, navigate, isNavigating]);
+
+  useEffect(() => {
+    if (matchesArray.length >= 3 && !isNavigating && savedProfileId) {
+      setIsNavigating(true);
+      setTimeout(() => {
+        navigate('/matches', {
+          state: {
+            matches: matchesArray,
+            profileId: savedProfileId,
+            isStreaming: true,
+          },
+        });
+      }, 500);
+    }
+  }, [matchesArray.length, savedProfileId, navigate, isNavigating]);
+
   const handleRetryGeneration = () => {
-    generateOverviewAsync();
+    generateOverviewWithOpenAI();
   };
 
   const handleConfirm = async () => {
@@ -38,44 +70,17 @@ export default function IntakeStep3() {
         overview,
       };
 
+      updateIntakeData({ overview });
+
       const savedProfile = await api.saveIntake(profileData);
       updateIntakeData({ profileId: savedProfile.id });
+      setSavedProfileId(savedProfile.id);
 
       storage.setProfileId(savedProfile.id);
 
-      const accumulatedMatches: any[] = [];
+      const forceRefresh = overview !== intakeData.overview;
 
-      await api.matchExpertsWithStreaming(
-        savedProfile.id,
-        overview,
-        {
-          onMatch: (match) => {
-            accumulatedMatches.push(match);
-            if (accumulatedMatches.length === 3) {
-              navigate('/matches', {
-                state: {
-                  matches: [...accumulatedMatches].sort((a, b) => b.match_score - a.match_score),
-                  profileId: savedProfile.id,
-                  isStreaming: true,
-                },
-              });
-            }
-          },
-          onComplete: (matches) => {
-            navigate('/matches', {
-              state: {
-                matches: matches.sort((a, b) => b.match_score - a.match_score),
-                profileId: savedProfile.id,
-                isStreaming: false,
-              },
-            });
-          },
-          onError: (err) => {
-            setError(err.message || 'Failed to match experts. Please try again.');
-            setIsMatching(false);
-          },
-        }
-      );
+      await startExpertMatching(overview, forceRefresh);
     } catch (err: any) {
       setError(err.message || 'Failed to save and match. Please try again.');
       setIsMatching(false);
@@ -178,7 +183,7 @@ export default function IntakeStep3() {
               {isMatching ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Finding your matches...
+                  {progress ? `Matching expert ${progress.current} of ${progress.total}...` : 'Finding your matches...'}
                 </>
               ) : (
                 'Confirm & see matches'

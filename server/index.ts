@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import clientRoutes from './routes/client';
 import dashboardRoutes from './routes/dashboard';
 import messagesRoutes from './routes/messages';
+import matchingRoutes from './routes/matching';
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use('/api/client', clientRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/messages', messagesRoutes);
+app.use('/api/matching', matchingRoutes);
 
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
   console.error('Error:', err);

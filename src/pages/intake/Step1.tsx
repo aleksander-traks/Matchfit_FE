@@ -14,7 +14,7 @@ import {
 
 export default function IntakeStep1() {
   const navigate = useNavigate();
-  const { intakeData, updateIntakeData, generateOverviewAsync } = useIntake();
+  const { intakeData, updateIntakeData, generateOverviewWithOpenAI, warmCacheInBackground } = useIntake();
 
   const [trainingExperience, setTrainingExperience] = useState(intakeData.training_experience);
   const [goals, setGoals] = useState<string[]>(intakeData.goals);
@@ -23,7 +23,7 @@ export default function IntakeStep1() {
   const [injuries, setInjuries] = useState<string[]>(intakeData.injuries);
   const [weightGoal, setWeightGoal] = useState(intakeData.weight_goal);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const data = {
       training_experience: trainingExperience,
       goals,
@@ -35,7 +35,8 @@ export default function IntakeStep1() {
 
     updateIntakeData(data);
 
-    generateOverviewAsync();
+    generateOverviewWithOpenAI();
+    warmCacheInBackground();
 
     navigate('/intake/step2');
   };
