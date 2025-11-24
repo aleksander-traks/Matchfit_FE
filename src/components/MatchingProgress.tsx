@@ -32,7 +32,7 @@ export default function MatchingProgress({
       case 'sorting':
         return 'Ranking trainers by match score...';
       case 'calculating-reasons':
-        return `Generating personalized recommendations... (${completedReasonsCount}/${totalExperts})`;)`;
+        return `Generating personalized recommendations... (${completedReasonsCount}/${totalExperts})`;
       case 'complete':
         return 'All matches calculated successfully!';
       default:
