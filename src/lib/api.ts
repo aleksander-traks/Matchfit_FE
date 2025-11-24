@@ -147,15 +147,17 @@ class ApiClient {
       throw insertError;
     }
 
-    const enrichedMatches = matches.map(match => {
-      const expertData = getExpertById(match.expert_id);
-      return {
-        ...match,
-        expert: expertData || null,
-        reason_1: match.reason1,
-        reason_2: match.reason2,
-      };
-    });
+    const enrichedMatches = await Promise.all(
+      matches.map(async (match) => {
+        const expertData = await getExpertById(match.expert_id);
+        return {
+          ...match,
+          expert: expertData || null,
+          reason_1: match.reason1,
+          reason_2: match.reason2,
+        };
+      })
+    );
 
     console.log('Enriched matches:', enrichedMatches);
 
@@ -198,7 +200,7 @@ class ApiClient {
 
     let enrichedTrainer = null;
     if (selectedTrainer) {
-      const expertData = getExpertById(selectedTrainer.expert_id);
+      const expertData = await getExpertById(selectedTrainer.expert_id);
       enrichedTrainer = {
         ...selectedTrainer,
         experts: expertData || null,
@@ -216,13 +218,15 @@ class ApiClient {
 
     if (matchesError) throw matchesError;
 
-    const enrichedMatches = (matches || []).map(match => {
-      const expertData = getExpertById(match.expert_id);
-      return {
-        ...match,
-        experts: expertData || null,
-      };
-    });
+    const enrichedMatches = await Promise.all(
+      (matches || []).map(async (match) => {
+        const expertData = await getExpertById(match.expert_id);
+        return {
+          ...match,
+          experts: expertData || null,
+        };
+      })
+    );
 
     return {
       profile,

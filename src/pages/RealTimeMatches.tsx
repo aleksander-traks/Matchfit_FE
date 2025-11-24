@@ -48,8 +48,8 @@ export default function RealTimeMatches() {
             client_profile_id: profileId,
             expert_id: expert.id,
             match_score: expert.match_score!,
-            reason_1: expert.reason1 || '',
-            reason_2: expert.reason2 || '',
+            reason_1: expert.reason1 || 'Specialized expertise matches your fitness goals',
+            reason_2: expert.reason2 || 'Excellent track record with similar clients',
           }));
 
         try {
