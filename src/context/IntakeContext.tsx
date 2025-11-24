@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { api } from '../lib/api';
 import { generateClientOverview, type ClientIntakeData } from '../lib/openai/generateOverview';
 import { errorLogger } from '../lib/logging/errorLogger';
 import type { AppError } from '../lib/errors/AppError';
@@ -29,7 +28,6 @@ interface IntakeContextType {
   intakeData: IntakeData;
   updateIntakeData: (data: Partial<IntakeData>) => void;
   resetIntakeData: () => void;
-  generateOverviewAsync: () => Promise<void>;
   generateOverviewWithOpenAI: () => Promise<void>;
   warmCacheInBackground: () => void;
 }
@@ -75,47 +73,6 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem('intakeData');
   };
 
-  const generateOverviewAsync = async () => {
-    const { training_experience, goals, sessions_per_week, chronic_diseases, injuries, weight_goal } = intakeData;
-
-    if (!training_experience || goals.length === 0 || !sessions_per_week || !weight_goal) {
-      return;
-    }
-
-    setIntakeData(prev => ({ ...prev, isGeneratingOverview: true, overviewError: null }));
-
-    try {
-      const response = await api.generateOverview({
-        training_experience,
-        goals,
-        sessions_per_week,
-        chronic_diseases: chronic_diseases || [],
-        injuries: injuries || [],
-        weight_goal,
-      });
-
-      setIntakeData(prev => ({
-        ...prev,
-        overview: response.overview,
-        isGeneratingOverview: false,
-        overviewError: null,
-      }));
-    } catch (error) {
-      console.error('Error generating overview:', error);
-
-      const appError = error as AppError;
-      await errorLogger.logError(appError, {
-        userAction: 'Generating overview',
-        clientProfileId: intakeData.profileId,
-      });
-
-      setIntakeData(prev => ({
-        ...prev,
-        isGeneratingOverview: false,
-        overviewError: appError,
-      }));
-    }
-  };
 
   const generateOverviewWithOpenAI = async () => {
     const { training_experience, goals, sessions_per_week, chronic_diseases, injuries, weight_goal } = intakeData;
@@ -171,7 +128,6 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
       intakeData,
       updateIntakeData,
       resetIntakeData,
-      generateOverviewAsync,
       generateOverviewWithOpenAI,
       warmCacheInBackground
     }}>

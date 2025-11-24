@@ -5,6 +5,7 @@ import IntakeStep1 from './pages/intake/Step1';
 import IntakeStep2 from './pages/intake/Step2';
 import IntakeStep3 from './pages/intake/Step3';
 import Matches from './pages/Matches';
+import RealTimeMatches from './pages/RealTimeMatches';
 import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
 
@@ -18,6 +19,7 @@ function App() {
           <Route path="/intake/step2" element={<IntakeStep2 />} />
           <Route path="/intake/step3" element={<IntakeStep3 />} />
           <Route path="/matches" element={<Matches />} />
+          <Route path="/realtime-matches" element={<RealTimeMatches />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/chat/:clientProfileId/:expertId" element={<Chat />} />
           <Route path="*" element={<Navigate to="/" replace />} />

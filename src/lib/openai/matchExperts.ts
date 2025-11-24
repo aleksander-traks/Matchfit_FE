@@ -13,11 +13,153 @@ export interface MatchResult {
   reason2: string;
 }
 
+export interface ScoreOnlyResult {
+  expert_id: number;
+  match_score: number;
+}
+
+export interface ReasonsOnlyResult {
+  expert_id: number;
+  reason1: string;
+  reason2: string;
+}
+
 export interface StreamingMatchCallbacks {
   onMatch: (match: MatchResult) => void;
   onProgress?: (completed: number, total: number) => void;
   onComplete: (matches: MatchResult[]) => void;
   onError: (error: Error) => void;
+}
+
+export async function calculateScoreOnly(
+  clientOverview: string,
+  expert: Expert
+): Promise<ScoreOnlyResult> {
+  try {
+    const prompt = `You are a fitness matchmaking expert. Rate the compatibility between a client and a fitness expert on a scale of 0-100.
+
+Client Profile:
+${clientOverview}
+
+Expert Profile:
+${expert.overview}
+
+Return only a JSON object with the match score:
+{
+  "match_score": <number between 0-100>
+}`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a fitness matchmaking expert. Respond only with valid JSON.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 50,
+      response_format: { type: 'json_object' },
+    });
+
+    const content = completion.choices[0]?.message?.content;
+
+    if (!content) {
+      throw ErrorFactory.createOpenAIError(
+        'No response from OpenAI',
+        'EMPTY_RESPONSE'
+      );
+    }
+
+    const result = JSON.parse(content);
+
+    return {
+      expert_id: expert.id,
+      match_score: result.match_score,
+    };
+  } catch (error: any) {
+    console.error(`Error calculating score for expert ${expert.id}:`, error);
+
+    if (error.name === 'SyntaxError') {
+      throw ErrorFactory.createOpenAIError(
+        'Invalid response format from OpenAI',
+        'INVALID_RESPONSE'
+      );
+    }
+
+    throw ErrorFactory.fromError(error);
+  }
+}
+
+export async function calculateReasonsOnly(
+  clientOverview: string,
+  expert: Expert,
+  score: number
+): Promise<ReasonsOnlyResult> {
+  try {
+    const prompt = `You are a fitness matchmaking expert. This client and expert have a ${score}% compatibility match. Provide exactly two brief reasons (one sentence each) why they would be a good match.
+
+Client Profile:
+${clientOverview}
+
+Expert Profile:
+${expert.overview}
+
+Return your response in this exact JSON format:
+{
+  "reason1": "<first reason>",
+  "reason2": "<second reason>"
+}`;
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a fitness matchmaking expert. Respond only with valid JSON.',
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 250,
+      response_format: { type: 'json_object' },
+    });
+
+    const content = completion.choices[0]?.message?.content;
+
+    if (!content) {
+      throw ErrorFactory.createOpenAIError(
+        'No response from OpenAI',
+        'EMPTY_RESPONSE'
+      );
+    }
+
+    const result = JSON.parse(content);
+
+    return {
+      expert_id: expert.id,
+      reason1: result.reason1,
+      reason2: result.reason2,
+    };
+  } catch (error: any) {
+    console.error(`Error calculating reasons for expert ${expert.id}:`, error);
+
+    if (error.name === 'SyntaxError') {
+      throw ErrorFactory.createOpenAIError(
+        'Invalid response format from OpenAI',
+        'INVALID_RESPONSE'
+      );
+    }
+
+    throw ErrorFactory.fromError(error);
+  }
 }
 
 export async function calculateMatchScore(

@@ -69,7 +69,7 @@ export class ErrorFactory {
     });
   }
 
-  static async fromResponse(response: Response, context?: ErrorContext): Promise<AppError> {
+  static async fromResponse(response: Response, _context?: ErrorContext): Promise<AppError> {
     let responseBody;
     try {
       const text = await response.text();
@@ -87,11 +87,11 @@ export class ErrorFactory {
     return ApiError.fromResponse(response, responseBody);
   }
 
-  static fromOpenAI(error: any): OpenAIError {
+  static fromOpenAI(error: any, _context?: ErrorContext): OpenAIError {
     return OpenAIError.fromOpenAIError(error);
   }
 
-  static fromUnknown(error: any): AppError {
+  static fromUnknown(error: any, context?: ErrorContext): AppError {
     if (error instanceof AppError) {
       return error;
     }
@@ -105,7 +105,7 @@ export class ErrorFactory {
       severity: 'error',
       source: 'client',
       isRetryable: true,
-      metadata: { originalError: error, ...context },
+      metadata: { originalError: error, ...(context || {}) },
     });
   }
 
@@ -132,7 +132,7 @@ export class ErrorFactory {
       severity: 'error',
       source: 'database',
       isRetryable: true,
-      metadata: { operation, details, context: undefined },
+      metadata: { operation, details },
     });
   }
 }

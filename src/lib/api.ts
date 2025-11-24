@@ -294,15 +294,36 @@ class ApiClient {
 
     if (!data) return [];
 
-    const enrichedResults = data.map(match => {
-      const expertData = getExpertById(match.expert_id);
-      return {
-        ...match,
-        expert: expertData || null,
-      };
-    });
+    const enrichedResults = await Promise.all(
+      data.map(async (match) => {
+        const expertData = await getExpertById(match.expert_id);
+        return {
+          ...match,
+          expert: expertData || null,
+        };
+      })
+    );
 
     return enrichedResults;
+  }
+
+  async saveMatchResults(matchResults: Array<{
+    client_profile_id: string;
+    expert_id: number;
+    match_score: number;
+    reason_1: string;
+    reason_2: string;
+  }>) {
+    const { error } = await supabase
+      .from('match_results')
+      .upsert(matchResults);
+
+    if (error) {
+      console.error('Error saving match results:', error);
+      throw error;
+    }
+
+    return { success: true };
   }
 
   async matchExpertsWithStreaming(
@@ -330,15 +351,17 @@ class ApiClient {
 
     if (cachedMatches && cachedMatches.size === expertIds.length) {
       const matches = expertIds.map(id => cachedMatches.get(id)!);
-      const enrichedMatches = matches.map(match => {
-        const expertData = getExpertById(match.expert_id);
-        return {
-          ...match,
-          expert: expertData || null,
-          reason_1: match.reason1,
-          reason_2: match.reason2,
-        };
-      });
+      const enrichedMatches = await Promise.all(
+        matches.map(async (match) => {
+          const expertData = await getExpertById(match.expert_id);
+          return {
+            ...match,
+            expert: expertData || null,
+            reason_1: match.reason1,
+            reason_2: match.reason2,
+          };
+        })
+      );
 
       const matchResults = matches.map(match => ({
         client_profile_id: clientProfileId,
@@ -355,8 +378,8 @@ class ApiClient {
     }
 
     await matchExpertsWithStreaming(overview, expertsWithOverview, {
-      onMatch: (match) => {
-        const expertData = getExpertById(match.expert_id);
+      onMatch: async (match) => {
+        const expertData = await getExpertById(match.expert_id);
         const enrichedMatch = {
           ...match,
           expert: expertData || null,
@@ -380,15 +403,17 @@ class ApiClient {
 
         await supabase.from('match_results').upsert(matchResults);
 
-        const enrichedMatches = matches.map(match => {
-          const expertData = getExpertById(match.expert_id);
-          return {
-            ...match,
-            expert: expertData || null,
-            reason_1: match.reason1,
-            reason_2: match.reason2,
-          };
-        });
+        const enrichedMatches = await Promise.all(
+          matches.map(async (match) => {
+            const expertData = await getExpertById(match.expert_id);
+            return {
+              ...match,
+              expert: expertData || null,
+              reason_1: match.reason1,
+              reason_2: match.reason2,
+            };
+          })
+        );
 
         callbacks.onComplete(enrichedMatches);
       },

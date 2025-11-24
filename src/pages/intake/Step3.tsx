@@ -4,7 +4,6 @@ import { useIntake } from '../../context/IntakeContext';
 import ProgressIndicator from '../../components/ProgressIndicator';
 import { api } from '../../lib/api';
 import { storage } from '../../lib/storage';
-import { useStreamingMatch } from '../../hooks/useStreamingMatch';
 import { Loader2 } from 'lucide-react';
 import ErrorAlert from '../../components/errors/ErrorAlert';
 import { defaultRetryStrategy } from '../../lib/errors/retryStrategy';
@@ -12,13 +11,10 @@ import { defaultRetryStrategy } from '../../lib/errors/retryStrategy';
 export default function IntakeStep3() {
   const navigate = useNavigate();
   const { intakeData, updateIntakeData, generateOverviewWithOpenAI } = useIntake();
-  const { startExpertMatching, matchesArray, progress, isComplete } = useStreamingMatch();
 
   const [overview, setOverview] = useState(intakeData.overview);
   const [isMatching, setIsMatching] = useState(false);
   const [error, setError] = useState('');
-  const [savedProfileId, setSavedProfileId] = useState<string | null>(null);
-  const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     setOverview(intakeData.overview);
@@ -30,33 +26,6 @@ export default function IntakeStep3() {
     }
   }, []);
 
-  useEffect(() => {
-    if (isComplete && !isNavigating && savedProfileId) {
-      setIsNavigating(true);
-      navigate('/matches', {
-        state: {
-          matches: matchesArray,
-          profileId: savedProfileId,
-          isStreaming: false,
-        },
-      });
-    }
-  }, [isComplete, matchesArray, savedProfileId, navigate, isNavigating]);
-
-  useEffect(() => {
-    if (matchesArray.length >= 3 && !isNavigating && savedProfileId) {
-      setIsNavigating(true);
-      setTimeout(() => {
-        navigate('/matches', {
-          state: {
-            matches: matchesArray,
-            profileId: savedProfileId,
-            isStreaming: true,
-          },
-        });
-      }, 500);
-    }
-  }, [matchesArray.length, savedProfileId, navigate, isNavigating]);
 
   const handleRetryGeneration = async () => {
     if (intakeData.overviewError) {
@@ -94,13 +63,16 @@ export default function IntakeStep3() {
 
       const savedProfile = await api.saveIntake(profileData);
       updateIntakeData({ profileId: savedProfile.id });
-      setSavedProfileId(savedProfile.id);
-
       storage.setProfileId(savedProfile.id);
 
-      await startExpertMatching(overview);
+      navigate('/realtime-matches', {
+        state: {
+          overview,
+          profileId: savedProfile.id,
+        },
+      });
     } catch (err: any) {
-      setError(err.message || 'Failed to save and match. Please try again.');
+      setError(err.message || 'Failed to save profile. Please try again.');
       setIsMatching(false);
     }
   };
@@ -189,10 +161,10 @@ export default function IntakeStep3() {
               {isMatching ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  {progress ? `Matching expert ${progress.current} of ${progress.total}...` : 'Finding your matches...'}
+                  Saving profile...
                 </>
               ) : (
-                'Confirm & see matches'
+                'Start Matching'
               )}
             </button>
           </div>
