@@ -1,4 +1,10 @@
+import { ErrorFactory } from './errors/errorFactory';
+import { NetworkError } from './errors/NetworkError';
+import { OpenAIError } from './errors/OpenAIError';
+import type { AppError } from './errors/AppError';
+
 const API_URL = 'http://localhost:3001/api/matching';
+const DEFAULT_TIMEOUT = 60000;
 
 export interface ClientIntakeData {
   training_experience: string;
@@ -22,12 +28,42 @@ export interface StreamCallbacks {
   onMatchScore?: (match: MatchResult) => void;
   onMatchingProgress?: (current: number, total: number, expertId: number) => void;
   onMatchingComplete?: (cached: boolean) => void;
-  onError?: (error: string) => void;
+  onError?: (error: AppError) => void;
+}
+
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number = DEFAULT_TIMEOUT
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+
+    if (error.name === 'AbortError') {
+      throw NetworkError.timeout(timeoutMs, url);
+    }
+
+    throw ErrorFactory.fromFetchError(error, url, {
+      userAction: 'Making API request',
+      pageUrl: window.location.href,
+    });
+  }
 }
 
 export class SSEClient {
   private eventSource: EventSource | null = null;
   private callbacks: StreamCallbacks;
+  private abortController: AbortController | null = null;
 
   constructor(callbacks: StreamCallbacks) {
     this.callbacks = callbacks;
@@ -36,6 +72,11 @@ export class SSEClient {
   async streamOverviewGeneration(clientData: ClientIntakeData): Promise<void> {
     return new Promise((resolve, reject) => {
       const url = `${API_URL}/generate-overview-stream`;
+      this.abortController = new AbortController();
+
+      const timeoutId = setTimeout(() => {
+        this.abortController?.abort();
+      }, DEFAULT_TIMEOUT);
 
       fetch(url, {
         method: 'POST',
@@ -43,17 +84,33 @@ export class SSEClient {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(clientData),
+        signal: this.abortController.signal,
       })
-        .then((response) => {
+        .then(async (response) => {
+          clearTimeout(timeoutId);
+
           if (!response.ok) {
-            throw new Error('Failed to start stream');
+            const error = await ErrorFactory.fromResponse(response, {
+              userAction: 'Generating overview with streaming',
+              pageUrl: window.location.href,
+            });
+            if (this.callbacks.onError) {
+              this.callbacks.onError(error);
+            }
+            reject(error);
+            return;
           }
 
           const reader = response.body?.getReader();
           const decoder = new TextDecoder();
 
           if (!reader) {
-            throw new Error('No reader available');
+            const error = NetworkError.serverUnreachable(url);
+            if (this.callbacks.onError) {
+              this.callbacks.onError(error);
+            }
+            reject(error);
+            return;
           }
 
           const readStream = async () => {
@@ -71,7 +128,6 @@ export class SSEClient {
 
                 for (const line of lines) {
                   if (line.startsWith('event:')) {
-                    const event = line.substring(6).trim();
                     continue;
                   }
 
@@ -82,6 +138,15 @@ export class SSEClient {
                     try {
                       const parsed = JSON.parse(data);
 
+                      if (parsed.error) {
+                        const error = OpenAIError.fromOpenAIError(parsed.error);
+                        if (this.callbacks.onError) {
+                          this.callbacks.onError(error);
+                        }
+                        reject(error);
+                        return;
+                      }
+
                       if (parsed.token && this.callbacks.onOverviewToken) {
                         this.callbacks.onOverviewToken(parsed.token);
                       }
@@ -90,26 +155,45 @@ export class SSEClient {
                         this.callbacks.onOverviewComplete(parsed.overview, parsed.cached || false);
                       }
                     } catch (e) {
-                      console.error('Failed to parse SSE data:', data);
+                      const error = OpenAIError.parsingError(data);
+                      if (this.callbacks.onError) {
+                        this.callbacks.onError(error);
+                      }
                     }
                   }
                 }
               }
             } catch (error: any) {
+              const appError = ErrorFactory.fromUnknown(error, {
+                userAction: 'Reading streaming response',
+                pageUrl: window.location.href,
+              });
               if (this.callbacks.onError) {
-                this.callbacks.onError(error.message);
+                this.callbacks.onError(appError);
               }
-              reject(error);
+              reject(appError);
             }
           };
 
           readStream();
         })
         .catch((error) => {
-          if (this.callbacks.onError) {
-            this.callbacks.onError(error.message);
+          clearTimeout(timeoutId);
+
+          let appError: AppError;
+          if (error.name === 'AbortError') {
+            appError = NetworkError.timeout(DEFAULT_TIMEOUT, url);
+          } else {
+            appError = ErrorFactory.fromFetchError(error, url, {
+              userAction: 'Starting overview generation stream',
+              pageUrl: window.location.href,
+            });
           }
-          reject(error);
+
+          if (this.callbacks.onError) {
+            this.callbacks.onError(appError);
+          }
+          reject(appError);
         });
     });
   }
@@ -117,6 +201,11 @@ export class SSEClient {
   async streamExpertMatching(overview: string, forceRefresh = false): Promise<void> {
     return new Promise((resolve, reject) => {
       const url = `${API_URL}/match-experts-stream`;
+      this.abortController = new AbortController();
+
+      const timeoutId = setTimeout(() => {
+        this.abortController?.abort();
+      }, DEFAULT_TIMEOUT);
 
       fetch(url, {
         method: 'POST',
@@ -124,17 +213,33 @@ export class SSEClient {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ overview, forceRefresh }),
+        signal: this.abortController.signal,
       })
-        .then((response) => {
+        .then(async (response) => {
+          clearTimeout(timeoutId);
+
           if (!response.ok) {
-            throw new Error('Failed to start stream');
+            const error = await ErrorFactory.fromResponse(response, {
+              userAction: 'Matching experts with streaming',
+              pageUrl: window.location.href,
+            });
+            if (this.callbacks.onError) {
+              this.callbacks.onError(error);
+            }
+            reject(error);
+            return;
           }
 
           const reader = response.body?.getReader();
           const decoder = new TextDecoder();
 
           if (!reader) {
-            throw new Error('No reader available');
+            const error = NetworkError.serverUnreachable(url);
+            if (this.callbacks.onError) {
+              this.callbacks.onError(error);
+            }
+            reject(error);
+            return;
           }
 
           const readStream = async () => {
@@ -165,6 +270,18 @@ export class SSEClient {
                     try {
                       const parsed = JSON.parse(data);
 
+                      if (parsed.error) {
+                        const error = ErrorFactory.fromUnknown(parsed.error, {
+                          userAction: 'Matching experts',
+                          pageUrl: window.location.href,
+                        });
+                        if (this.callbacks.onError) {
+                          this.callbacks.onError(error);
+                        }
+                        reject(error);
+                        return;
+                      }
+
                       if (parsed.expert_id && parsed.match_score !== undefined) {
                         if (this.callbacks.onMatchScore) {
                           this.callbacks.onMatchScore(parsed as MatchResult);
@@ -189,25 +306,45 @@ export class SSEClient {
                 }
               }
             } catch (error: any) {
+              const appError = ErrorFactory.fromUnknown(error, {
+                userAction: 'Reading matching stream',
+                pageUrl: window.location.href,
+              });
               if (this.callbacks.onError) {
-                this.callbacks.onError(error.message);
+                this.callbacks.onError(appError);
               }
-              reject(error);
+              reject(appError);
             }
           };
 
           readStream();
         })
         .catch((error) => {
-          if (this.callbacks.onError) {
-            this.callbacks.onError(error.message);
+          clearTimeout(timeoutId);
+
+          let appError: AppError;
+          if (error.name === 'AbortError') {
+            appError = NetworkError.timeout(DEFAULT_TIMEOUT, url);
+          } else {
+            appError = ErrorFactory.fromFetchError(error, url, {
+              userAction: 'Starting expert matching stream',
+              pageUrl: window.location.href,
+            });
           }
-          reject(error);
+
+          if (this.callbacks.onError) {
+            this.callbacks.onError(appError);
+          }
+          reject(appError);
         });
     });
   }
 
   close(): void {
+    if (this.abortController) {
+      this.abortController.abort();
+      this.abortController = null;
+    }
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
@@ -216,45 +353,93 @@ export class SSEClient {
 }
 
 export async function generateOverview(clientData: ClientIntakeData): Promise<string> {
-  const response = await fetch(`${API_URL}/generate-overview`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(clientData),
-  });
+  const url = `${API_URL}/generate-overview`;
 
-  if (!response.ok) {
-    throw new Error('Failed to generate overview');
+  try {
+    const response = await fetchWithTimeout(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(clientData),
+      },
+      DEFAULT_TIMEOUT
+    );
+
+    if (!response.ok) {
+      throw await ErrorFactory.fromResponse(response, {
+        userAction: 'Generating overview',
+        pageUrl: window.location.href,
+      });
+    }
+
+    const data = await response.json();
+    return data.overview;
+  } catch (error: any) {
+    if (error.code) {
+      throw error;
+    }
+    throw ErrorFactory.fromFetchError(error, url, {
+      userAction: 'Generating overview',
+      pageUrl: window.location.href,
+    });
   }
-
-  const data = await response.json();
-  return data.overview;
 }
 
 export async function matchExperts(overview: string): Promise<MatchResult[]> {
-  const response = await fetch(`${API_URL}/match-experts`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ overview }),
-  });
+  const url = `${API_URL}/match-experts`;
 
-  if (!response.ok) {
-    throw new Error('Failed to match experts');
+  try {
+    const response = await fetchWithTimeout(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ overview }),
+      },
+      DEFAULT_TIMEOUT
+    );
+
+    if (!response.ok) {
+      throw await ErrorFactory.fromResponse(response, {
+        userAction: 'Matching experts',
+        pageUrl: window.location.href,
+      });
+    }
+
+    const data = await response.json();
+    return data.matches;
+  } catch (error: any) {
+    if (error.code) {
+      throw error;
+    }
+    throw ErrorFactory.fromFetchError(error, url, {
+      userAction: 'Matching experts',
+      pageUrl: window.location.href,
+    });
   }
-
-  const data = await response.json();
-  return data.matches;
 }
 
 export async function warmCache(clientData: ClientIntakeData): Promise<void> {
-  await fetch(`${API_URL}/warm-cache`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ clientData }),
-  });
+  const url = `${API_URL}/warm-cache`;
+
+  try {
+    await fetchWithTimeout(
+      url,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ clientData }),
+      },
+      10000
+    );
+  } catch (error) {
+    console.warn('Failed to warm cache:', error);
+  }
 }

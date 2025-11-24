@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from '../lib/api';
 import { generateOverview, warmCache, type ClientIntakeData } from '../lib/openaiStream';
+import { errorLogger } from '../lib/logging/errorLogger';
+import type { AppError } from '../lib/errors/AppError';
 
 interface IntakeData {
   training_experience: string;
@@ -18,7 +20,7 @@ interface IntakeData {
   overview: string;
   profileId?: string;
   isGeneratingOverview: boolean;
-  overviewError: string;
+  overviewError: AppError | null;
   partialOverview: string;
   useOpenAI: boolean;
 }
@@ -47,7 +49,7 @@ const initialIntakeData: IntakeData = {
   cooperation: '',
   overview: '',
   isGeneratingOverview: false,
-  overviewError: '',
+  overviewError: null,
   partialOverview: '',
   useOpenAI: true,
 };
@@ -80,7 +82,7 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIntakeData(prev => ({ ...prev, isGeneratingOverview: true, overviewError: '' }));
+    setIntakeData(prev => ({ ...prev, isGeneratingOverview: true, overviewError: null }));
 
     try {
       const response = await api.generateOverview({
@@ -96,14 +98,20 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
         ...prev,
         overview: response.overview,
         isGeneratingOverview: false,
-        overviewError: '',
+        overviewError: null,
       }));
     } catch (error: any) {
       console.error('Error generating overview:', error);
+
+      await errorLogger.logError(error, {
+        userAction: 'Generating overview (Python backend)',
+        clientProfileId: intakeData.profileId,
+      });
+
       setIntakeData(prev => ({
         ...prev,
         isGeneratingOverview: false,
-        overviewError: error.message || 'Failed to generate overview',
+        overviewError: error,
       }));
     }
   };
@@ -115,7 +123,7 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIntakeData(prev => ({ ...prev, isGeneratingOverview: true, overviewError: '', partialOverview: '' }));
+    setIntakeData(prev => ({ ...prev, isGeneratingOverview: true, overviewError: null, partialOverview: '' }));
 
     try {
       const clientData: ClientIntakeData = {
@@ -134,14 +142,20 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
         overview,
         partialOverview: overview,
         isGeneratingOverview: false,
-        overviewError: '',
+        overviewError: null,
       }));
     } catch (error: any) {
       console.error('Error generating overview with OpenAI:', error);
+
+      await errorLogger.logError(error, {
+        userAction: 'Generating overview with OpenAI',
+        clientProfileId: intakeData.profileId,
+      });
+
       setIntakeData(prev => ({
         ...prev,
         isGeneratingOverview: false,
-        overviewError: error.message || 'Failed to generate overview',
+        overviewError: error,
       }));
     }
   };

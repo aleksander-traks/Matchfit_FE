@@ -5,7 +5,9 @@ import ProgressIndicator from '../../components/ProgressIndicator';
 import { api } from '../../lib/api';
 import { storage } from '../../lib/storage';
 import { useStreamingMatch } from '../../hooks/useStreamingMatch';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import ErrorAlert from '../../components/errors/ErrorAlert';
+import { defaultRetryStrategy } from '../../lib/errors/retryStrategy';
 
 export default function IntakeStep3() {
   const navigate = useNavigate();
@@ -56,8 +58,26 @@ export default function IntakeStep3() {
     }
   }, [matchesArray.length, savedProfileId, navigate, isNavigating]);
 
-  const handleRetryGeneration = () => {
-    generateOverviewWithOpenAI();
+  const handleRetryGeneration = async () => {
+    if (intakeData.overviewError) {
+      await defaultRetryStrategy.executeWithRetry(
+        async () => {
+          await generateOverviewWithOpenAI();
+        },
+        'overview-generation',
+        (attempt, delay, error) => {
+          console.log(`Retry attempt ${attempt} in ${delay}ms:`, error.userMessage);
+        }
+      ).catch(error => {
+        console.error('All retry attempts failed:', error);
+      });
+    } else {
+      await generateOverviewWithOpenAI();
+    }
+  };
+
+  const handleDismissError = () => {
+    updateIntakeData({ overviewError: null });
   };
 
   const handleConfirm = async () => {
@@ -124,25 +144,13 @@ export default function IntakeStep3() {
             </p>
 
             {intakeData.overviewError && (
-              <div className="mb-4 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-yellow-900 mb-2">
-                      Unable to generate overview automatically
-                    </p>
-                    <p className="text-sm text-yellow-700 mb-3">
-                      {intakeData.overviewError}
-                    </p>
-                    <button
-                      onClick={handleRetryGeneration}
-                      className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-900 text-sm font-medium rounded transition-colors"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      Try again
-                    </button>
-                  </div>
-                </div>
+              <div className="mb-4">
+                <ErrorAlert
+                  error={intakeData.overviewError}
+                  onRetry={handleRetryGeneration}
+                  onDismiss={handleDismissError}
+                  showTechnicalDetails={true}
+                />
               </div>
             )}
 
