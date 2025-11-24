@@ -11,6 +11,28 @@ export interface ErrorContext {
 }
 
 export class ErrorFactory {
+  static fromError(error: any): AppError {
+    if (error instanceof AppError) {
+      return error;
+    }
+
+    if (error.name === 'OpenAIError' || error.constructor.name.includes('OpenAI')) {
+      return OpenAIError.fromOpenAIError(error);
+    }
+
+    return this.fromUnknown(error);
+  }
+
+  static createOpenAIError(message: string, code: string): OpenAIError {
+    return new OpenAIError({
+      code: `AI-${code}`,
+      message,
+      userMessage: message,
+      isRetryable: true,
+      metadata: {},
+    });
+  }
+
   static fromFetchError(error: any, url: string, context?: ErrorContext): AppError {
     const errorMessage = error?.message || error?.toString() || 'Unknown error';
 
@@ -65,11 +87,11 @@ export class ErrorFactory {
     return ApiError.fromResponse(response, responseBody);
   }
 
-  static fromOpenAI(error: any, context?: ErrorContext): OpenAIError {
+  static fromOpenAI(error: any): OpenAIError {
     return OpenAIError.fromOpenAIError(error);
   }
 
-  static fromUnknown(error: any, context?: ErrorContext): AppError {
+  static fromUnknown(error: any): AppError {
     if (error instanceof AppError) {
       return error;
     }
@@ -110,7 +132,7 @@ export class ErrorFactory {
       severity: 'error',
       source: 'database',
       isRetryable: true,
-      metadata: { operation, details },
+      metadata: { operation, details, context: undefined },
     });
   }
 }

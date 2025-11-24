@@ -1,7 +1,5 @@
-import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { IntakeProvider } from './context/IntakeContext';
-import { startKeepAlive } from './lib/keepAlive';
 import Landing from './pages/Landing';
 import IntakeStep1 from './pages/intake/Step1';
 import IntakeStep2 from './pages/intake/Step2';
@@ -11,10 +9,6 @@ import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
 
 function App() {
-  useEffect(() => {
-    startKeepAlive();
-  }, []);
-
   return (
     <IntakeProvider>
       <BrowserRouter>

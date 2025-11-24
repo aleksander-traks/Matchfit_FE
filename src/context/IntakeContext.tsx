@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from '../lib/api';
-import { generateOverview, warmCache, type ClientIntakeData } from '../lib/openaiStream';
+import { generateClientOverview, type ClientIntakeData } from '../lib/openai/generateOverview';
 import { errorLogger } from '../lib/logging/errorLogger';
 import type { AppError } from '../lib/errors/AppError';
 
@@ -100,18 +100,19 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
         isGeneratingOverview: false,
         overviewError: null,
       }));
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error generating overview:', error);
 
-      await errorLogger.logError(error, {
-        userAction: 'Generating overview (Python backend)',
+      const appError = error as AppError;
+      await errorLogger.logError(appError, {
+        userAction: 'Generating overview',
         clientProfileId: intakeData.profileId,
       });
 
       setIntakeData(prev => ({
         ...prev,
         isGeneratingOverview: false,
-        overviewError: error,
+        overviewError: appError,
       }));
     }
   };
@@ -135,7 +136,7 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
         weight_goal,
       };
 
-      const overview = await generateOverview(clientData);
+      const overview = await generateClientOverview(clientData);
 
       setIntakeData(prev => ({
         ...prev,
@@ -144,10 +145,11 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
         isGeneratingOverview: false,
         overviewError: null,
       }));
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error generating overview with OpenAI:', error);
 
-      await errorLogger.logError(error, {
+      const appError = error as AppError;
+      await errorLogger.logError(appError, {
         userAction: 'Generating overview with OpenAI',
         clientProfileId: intakeData.profileId,
       });
@@ -155,30 +157,13 @@ export function IntakeProvider({ children }: { children: ReactNode }) {
       setIntakeData(prev => ({
         ...prev,
         isGeneratingOverview: false,
-        overviewError: error,
+        overviewError: appError,
       }));
     }
   };
 
   const warmCacheInBackground = () => {
-    const { training_experience, goals, sessions_per_week, chronic_diseases, injuries, weight_goal } = intakeData;
-
-    if (!training_experience || goals.length === 0 || !sessions_per_week || !weight_goal) {
-      return;
-    }
-
-    const clientData: ClientIntakeData = {
-      training_experience,
-      goals,
-      sessions_per_week,
-      chronic_diseases: chronic_diseases || [],
-      injuries: injuries || [],
-      weight_goal,
-    };
-
-    warmCache(clientData).catch(error => {
-      console.error('Error warming cache:', error);
-    });
+    console.log('Cache warming not needed with direct OpenAI calls');
   };
 
   return (

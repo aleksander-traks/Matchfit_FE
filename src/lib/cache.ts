@@ -45,10 +45,16 @@ export async function getCachedOverview(profileKey: string): Promise<string | nu
     }
 
     if (data) {
+      const { data: currentData } = await supabase
+        .from('overview_cache')
+        .select('hit_count')
+        .eq('id', data.id)
+        .maybeSingle();
+
       await supabase
         .from('overview_cache')
         .update({
-          hit_count: supabase.sql`hit_count + 1`,
+          hit_count: (currentData?.hit_count || 0) + 1,
           last_accessed_at: new Date().toISOString(),
         })
         .eq('id', data.id);

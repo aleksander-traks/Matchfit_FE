@@ -1,11 +1,13 @@
-import { useState, useCallback, useRef } from 'react';
-import { SSEClient, type MatchResult, type ClientIntakeData } from '../lib/openaiStream';
+import { useState, useCallback } from 'react';
+import { streamClientOverview, type ClientIntakeData } from '../lib/openai/generateOverview';
+import { matchExpertsWithStreaming, type MatchResult } from '../lib/openai/matchExperts';
+import { supabase } from '../lib/supabase';
 
 interface StreamingState {
   isStreaming: boolean;
   overview: string;
   partialOverview: string;
-  matches: Map<number, MatchResult>;
+  matches: MatchResult[];
   progress: { current: number; total: number } | null;
   error: string | null;
   isComplete: boolean;
@@ -16,13 +18,11 @@ export function useStreamingMatch() {
     isStreaming: false,
     overview: '',
     partialOverview: '',
-    matches: new Map(),
+    matches: [],
     progress: null,
     error: null,
     isComplete: false,
   });
-
-  const clientRef = useRef<SSEClient | null>(null);
 
   const startOverviewGeneration = useCallback(async (clientData: ClientIntakeData) => {
     setState((prev) => ({
@@ -34,110 +34,97 @@ export function useStreamingMatch() {
       isComplete: false,
     }));
 
-    const client = new SSEClient({
-      onOverviewToken: (token) => {
-        setState((prev) => ({
-          ...prev,
-          partialOverview: prev.partialOverview + token,
-        }));
-      },
-      onOverviewComplete: (overview, cached) => {
-        setState((prev) => ({
-          ...prev,
-          overview,
-          partialOverview: overview,
-          isStreaming: false,
-        }));
-      },
-      onError: (error) => {
-        setState((prev) => ({
-          ...prev,
-          error,
-          isStreaming: false,
-        }));
-      },
-    });
-
-    clientRef.current = client;
-
     try {
-      await client.streamOverviewGeneration(clientData);
-    } catch (error: any) {
+      let fullOverview = '';
+      for await (const token of streamClientOverview(clientData)) {
+        fullOverview += token;
+        setState((prev) => ({
+          ...prev,
+          partialOverview: fullOverview,
+        }));
+      }
+
       setState((prev) => ({
         ...prev,
-        error: error.message || 'Failed to generate overview',
+        overview: fullOverview,
+        isStreaming: false,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to generate overview',
         isStreaming: false,
       }));
     }
   }, []);
 
-  const startExpertMatching = useCallback(async (overview: string, forceRefresh = false) => {
+  const startExpertMatching = useCallback(async (overview: string) => {
     setState((prev) => ({
       ...prev,
       isStreaming: true,
-      matches: new Map(),
+      matches: [],
       progress: null,
       error: null,
       isComplete: false,
     }));
 
-    const client = new SSEClient({
-      onMatchScore: (match) => {
-        setState((prev) => {
-          const newMatches = new Map(prev.matches);
-          newMatches.set(match.expert_id, match);
-          return {
-            ...prev,
-            matches: newMatches,
-          };
-        });
-      },
-      onMatchingProgress: (current, total, expertId) => {
-        setState((prev) => ({
-          ...prev,
-          progress: { current, total },
-        }));
-      },
-      onMatchingComplete: (cached) => {
-        setState((prev) => ({
-          ...prev,
-          isStreaming: false,
-          isComplete: true,
-        }));
-      },
-      onError: (error) => {
-        setState((prev) => ({
-          ...prev,
-          error,
-          isStreaming: false,
-        }));
-      },
-    });
-
-    clientRef.current = client;
-
     try {
-      await client.streamExpertMatching(overview, forceRefresh);
-    } catch (error: any) {
+      const { data: experts, error: expertsError } = await supabase
+        .from('experts')
+        .select('id, overview');
+
+      if (expertsError) throw expertsError;
+      if (!experts || experts.length === 0) {
+        throw new Error('No experts found in database.');
+      }
+
+      const expertsWithOverview = experts
+        .filter(e => e.overview)
+        .map(e => ({ id: e.id, overview: e.overview! }));
+
+      await matchExpertsWithStreaming(overview, expertsWithOverview, {
+        onMatch: (match) => {
+          setState((prev) => ({
+            ...prev,
+            matches: [...prev.matches, match],
+          }));
+        },
+        onProgress: (completed, total) => {
+          setState((prev) => ({
+            ...prev,
+            progress: { current: completed, total },
+          }));
+        },
+        onComplete: () => {
+          setState((prev) => ({
+            ...prev,
+            isStreaming: false,
+            isComplete: true,
+          }));
+        },
+        onError: (error) => {
+          setState((prev) => ({
+            ...prev,
+            error: error.message,
+            isStreaming: false,
+          }));
+        },
+      });
+    } catch (error) {
       setState((prev) => ({
         ...prev,
-        error: error.message || 'Failed to match experts',
+        error: error instanceof Error ? error.message : 'Failed to match experts',
         isStreaming: false,
       }));
     }
   }, []);
 
   const reset = useCallback(() => {
-    if (clientRef.current) {
-      clientRef.current.close();
-      clientRef.current = null;
-    }
-
     setState({
       isStreaming: false,
       overview: '',
       partialOverview: '',
-      matches: new Map(),
+      matches: [],
       progress: null,
       error: null,
       isComplete: false,
@@ -149,6 +136,6 @@ export function useStreamingMatch() {
     startOverviewGeneration,
     startExpertMatching,
     reset,
-    matchesArray: Array.from(state.matches.values()).sort((a, b) => b.match_score - a.match_score),
+    matchesArray: state.matches.sort((a, b) => b.match_score - a.match_score),
   };
 }

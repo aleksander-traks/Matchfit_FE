@@ -1,5 +1,4 @@
 import { supabase } from './supabase';
-import { pythonApi } from './pythonApi';
 import { getExpertById } from '../data/expertsData';
 import { generateDummyRecommendations } from './recommendations';
 import {
@@ -9,7 +8,11 @@ import {
   getCachedMatches,
   setCachedMatches,
 } from './cache';
-import { matchExpertsStreaming, StreamingMatchCallbacks } from './streaming';
+import { generateClientOverview } from './openai/generateOverview';
+import {
+  matchExpertsWithStreaming,
+  type StreamingMatchCallbacks,
+} from './openai/matchExperts';
 
 class ApiClient {
   async saveIntake(data: {
@@ -77,11 +80,11 @@ class ApiClient {
       return { overview: cachedOverview };
     }
 
-    const result = await pythonApi.generateOverview(data);
+    const overview = await generateClientOverview(data);
 
-    await setCachedOverview(profileKey, result.overview);
+    await setCachedOverview(profileKey, overview);
 
-    return result;
+    return { overview };
   }
 
   async matchExperts(clientProfileId: string, overview: string) {
@@ -116,13 +119,9 @@ class ApiClient {
       console.log('Using cached match results');
       matches = expertIds.map(id => cachedMatches.get(id)!);
     } else {
-      console.log('Calling Python API for fresh matches');
-      const result = await pythonApi.matchExperts({
-        client_overview: overview,
-        experts: expertsWithOverview,
-      });
-
-      matches = result.matches;
+      console.log('Generating fresh matches with OpenAI');
+      const { batchCalculateMatchScores } = await import('./openai/matchExperts');
+      matches = await batchCalculateMatchScores(overview, expertsWithOverview);
 
       await setCachedMatches(overview, matches);
     }
@@ -355,7 +354,7 @@ class ApiClient {
       return;
     }
 
-    await matchExpertsStreaming(overview, expertsWithOverview, {
+    await matchExpertsWithStreaming(overview, expertsWithOverview, {
       onMatch: (match) => {
         const expertData = getExpertById(match.expert_id);
         const enrichedMatch = {

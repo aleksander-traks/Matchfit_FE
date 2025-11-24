@@ -12,7 +12,7 @@ import { defaultRetryStrategy } from '../../lib/errors/retryStrategy';
 export default function IntakeStep3() {
   const navigate = useNavigate();
   const { intakeData, updateIntakeData, generateOverviewWithOpenAI } = useIntake();
-  const { startExpertMatching, matches, matchesArray, isStreaming, progress, isComplete } = useStreamingMatch();
+  const { startExpertMatching, matchesArray, progress, isComplete } = useStreamingMatch();
 
   const [overview, setOverview] = useState(intakeData.overview);
   const [isMatching, setIsMatching] = useState(false);
@@ -98,9 +98,7 @@ export default function IntakeStep3() {
 
       storage.setProfileId(savedProfile.id);
 
-      const forceRefresh = overview !== intakeData.overview;
-
-      await startExpertMatching(overview, forceRefresh);
+      await startExpertMatching(overview);
     } catch (err: any) {
       setError(err.message || 'Failed to save and match. Please try again.');
       setIsMatching(false);
