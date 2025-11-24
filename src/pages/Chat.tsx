@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { ArrowLeft, Send } from 'lucide-react';
+import EmailCollectionModal from '../components/EmailCollectionModal';
+import Toast from '../components/Toast';
 
 export default function Chat() {
   const { clientProfileId, expertId } = useParams();
@@ -11,13 +13,24 @@ export default function Chat() {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
+  const [clientEmail, setClientEmail] = useState<string | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (clientProfileId && expertId) {
-      api
-        .getMessages(clientProfileId, parseInt(expertId))
-        .then(setMessages)
+      Promise.all([
+        api.getMessages(clientProfileId, parseInt(expertId)),
+        api.getClientProfile(clientProfileId)
+      ])
+        .then(([msgs, profile]) => {
+          setMessages(msgs);
+          if (profile?.email) {
+            setClientEmail(profile.email);
+          }
+        })
         .catch(console.error)
         .finally(() => setIsLoading(false));
     }
@@ -32,16 +45,38 @@ export default function Chat() {
 
     if (!newMessage.trim() || !clientProfileId || !expertId) return;
 
+    if (!clientEmail) {
+      setPendingMessage(newMessage);
+      setShowEmailModal(true);
+      return;
+    }
+
+    await sendMessageWithEmail(newMessage, clientEmail);
+  };
+
+  const sendMessageWithEmail = async (content: string, email: string) => {
     setIsSending(true);
 
     try {
-      const message = await api.sendMessage(clientProfileId, parseInt(expertId), newMessage);
+      const message = await api.sendMessage(clientProfileId!, parseInt(expertId!), content, email);
       setMessages([...messages, message]);
       setNewMessage('');
+      setPendingMessage(null);
+      if (!clientEmail) {
+        setClientEmail(email);
+        setToast({ message: 'Email saved! You\'ll be notified when your trainer responds.', type: 'success' });
+      }
     } catch (error: any) {
-      alert(error.message);
+      setToast({ message: error.message || 'Failed to send message', type: 'error' });
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleEmailSubmit = async (email: string) => {
+    if (pendingMessage) {
+      await sendMessageWithEmail(pendingMessage, email);
+      setShowEmailModal(false);
     }
   };
 
@@ -62,21 +97,22 @@ export default function Chat() {
   }
 
   return (
-    <div className="h-screen bg-neutral-50 flex flex-col">
-      <div className="bg-white border-b border-neutral-200 p-4">
-        <div className="max-w-4xl mx-auto flex items-center gap-3">
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-neutral-600 hover:text-neutral-900"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <div>
-            <h2 className="text-lg font-bold text-neutral-900">Chat with your trainer</h2>
-            <p className="text-sm text-neutral-600">Ask questions about your training</p>
+    <>
+      <div className="h-screen bg-neutral-50 flex flex-col">
+        <div className="bg-white border-b border-neutral-200 p-4">
+          <div className="max-w-4xl mx-auto flex items-center gap-3">
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="text-neutral-600 hover:text-neutral-900"
+            >
+              <ArrowLeft className="w-6 h-6" />
+            </button>
+            <div>
+              <h2 className="text-lg font-bold text-neutral-900">Chat with your trainer</h2>
+              <p className="text-sm text-neutral-600">Ask questions about your training</p>
+            </div>
           </div>
         </div>
-      </div>
 
       <div className="flex-1 overflow-y-auto p-4">
         <div className="max-w-4xl mx-auto space-y-4">
@@ -134,5 +170,25 @@ export default function Chat() {
         </form>
       </div>
     </div>
+
+    <EmailCollectionModal
+      isOpen={showEmailModal}
+      onClose={() => {
+        setShowEmailModal(false);
+        setPendingMessage(null);
+      }}
+      onSubmit={handleEmailSubmit}
+      title="Stay Connected"
+      message="We'll notify you when your trainer responds to your message."
+    />
+
+    {toast && (
+      <Toast
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast(null)}
+      />
+    )}
+    </>
   );
 }

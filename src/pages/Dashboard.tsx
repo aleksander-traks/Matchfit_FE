@@ -3,11 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
 import { Star, MessageCircle, Award, Calendar, DollarSign, MapPin, Lightbulb } from 'lucide-react';
+import IntroCallModal from '../components/IntroCallModal';
+import Toast from '../components/Toast';
+import type { IntroCallData } from '../components/IntroCallModal';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const [dashboard, setDashboard] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showIntroCallModal, setShowIntroCallModal] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     const profileId = storage.getProfileId();
@@ -58,6 +63,24 @@ export default function Dashboard() {
   }
 
   const trainer = dashboard.selectedTrainer.experts;
+  const profileId = dashboard.profile.id;
+
+  const handleIntroCallSubmit = async (data: IntroCallData) => {
+    try {
+      await api.scheduleIntroCall({
+        clientProfileId: profileId,
+        expertId: trainer.id,
+        email: data.email,
+        preferredDate: data.preferredDate,
+        preferredTime: data.preferredTime,
+        notes: data.notes,
+      });
+      setToast({ message: 'Intro call request sent successfully!', type: 'success' });
+    } catch (error: any) {
+      setToast({ message: error.message || 'Failed to schedule intro call', type: 'error' });
+      throw error;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -70,9 +93,19 @@ export default function Dashboard() {
       <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
         <div className="bg-white rounded-lg shadow-sm p-6">
           <h2 className="text-xl font-bold text-neutral-900 mb-4">Your Trainer</h2>
-          <div className="flex justify-between items-start mb-4">
-            <div>
-              <h3 className="text-2xl font-bold text-emerald-600 mb-2">{trainer.specialization}</h3>
+          <div className="flex gap-4 mb-4">
+            {trainer.image && (
+              <img
+                src={trainer.image}
+                alt={trainer.name || 'Trainer'}
+                className="w-24 h-24 rounded-full object-cover ring-2 ring-emerald-100 flex-shrink-0"
+              />
+            )}
+            <div className="flex-1">
+              {trainer.name && (
+                <h3 className="text-2xl font-bold text-neutral-900 mb-1">{trainer.name}</h3>
+              )}
+              <p className="text-emerald-600 font-semibold mb-2">{trainer.specialization}</p>
               <div className="flex items-center gap-4 text-sm text-neutral-600">
                 <span className="flex items-center gap-1">
                   <Award className="w-4 h-4" />
@@ -109,7 +142,10 @@ export default function Dashboard() {
               <MessageCircle className="w-5 h-5" />
               Open chat
             </button>
-            <button className="px-6 py-3 border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50">
+            <button
+              onClick={() => setShowIntroCallModal(true)}
+              className="px-6 py-3 border border-emerald-600 text-emerald-600 rounded-lg font-semibold hover:bg-emerald-50 transition-colors"
+            >
               Book intro call
             </button>
           </div>
@@ -142,15 +178,25 @@ export default function Dashboard() {
                 return (
                   <div
                     key={match.id}
-                    className="border border-neutral-200 rounded-lg p-4 flex justify-between items-center"
+                    className="border border-neutral-200 rounded-lg p-4 flex gap-3 items-center"
                   >
-                    <div>
-                      <h4 className="font-semibold text-neutral-900">{expert.specialization}</h4>
-                      <p className="text-sm text-neutral-600">
+                    {expert.image && (
+                      <img
+                        src={expert.image}
+                        alt={expert.name || 'Trainer'}
+                        className="w-14 h-14 rounded-full object-cover ring-2 ring-neutral-100 flex-shrink-0"
+                      />
+                    )}
+                    <div className="flex-1">
+                      {expert.name && (
+                        <h4 className="font-semibold text-neutral-900">{expert.name}</h4>
+                      )}
+                      <p className="text-sm text-emerald-600">{expert.specialization}</p>
+                      <p className="text-xs text-neutral-600">
                         {expert.years_of_experience} years • {matchPercentage}% match
                       </p>
                     </div>
-                    <button className="px-4 py-2 border border-emerald-600 text-emerald-600 rounded-lg text-sm font-semibold hover:bg-emerald-50">
+                    <button className="px-4 py-2 border border-emerald-600 text-emerald-600 rounded-lg text-sm font-semibold hover:bg-emerald-50 flex-shrink-0">
                       Switch
                     </button>
                   </div>
@@ -189,6 +235,23 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      <IntroCallModal
+        isOpen={showIntroCallModal}
+        onClose={() => setShowIntroCallModal(false)}
+        onSubmit={handleIntroCallSubmit}
+        expertId={trainer.id}
+        expertName={trainer.name || trainer.specialization}
+        clientProfileId={profileId}
+      />
+
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

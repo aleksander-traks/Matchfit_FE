@@ -244,7 +244,11 @@ class ApiClient {
     return data;
   }
 
-  async sendMessage(clientProfileId: string, expertId: number, content: string) {
+  async sendMessage(clientProfileId: string, expertId: number, content: string, email?: string) {
+    if (email) {
+      await this.updateClientEmail(clientProfileId, email);
+    }
+
     const { data, error } = await supabase
       .from('messages')
       .insert({
@@ -258,6 +262,51 @@ class ApiClient {
 
     if (error) throw error;
     return data;
+  }
+
+  async updateClientEmail(profileId: string, email: string) {
+    const { data, error } = await supabase
+      .from('client_profiles')
+      .update({
+        email,
+        email_consent: true,
+        email_consent_date: new Date().toISOString(),
+      })
+      .eq('id', profileId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async scheduleIntroCall(data: {
+    clientProfileId: string;
+    expertId: number;
+    email: string;
+    preferredDate?: string;
+    preferredTime?: string;
+    notes?: string;
+  }) {
+    const { data: introCall, error } = await supabase
+      .from('intro_calls')
+      .insert({
+        client_profile_id: data.clientProfileId,
+        expert_id: data.expertId,
+        email: data.email,
+        preferred_date: data.preferredDate || null,
+        preferred_time: data.preferredTime || null,
+        notes: data.notes || null,
+        status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    await this.updateClientEmail(data.clientProfileId, data.email);
+
+    return introCall;
   }
 
   async updateProfile(profileId: string, updates: any) {
