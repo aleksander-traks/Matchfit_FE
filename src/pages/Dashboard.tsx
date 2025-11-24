@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
-import { Star, MessageCircle, Award, Calendar, DollarSign, MapPin, Lightbulb } from 'lucide-react';
+import { Star, MessageCircle, Award, Calendar, DollarSign, MapPin, Lightbulb, User, Dumbbell, Heart, Clock, MapPinned } from 'lucide-react';
 import IntroCallModal from '../components/IntroCallModal';
 import Toast from '../components/Toast';
 import type { IntroCallData } from '../components/IntroCallModal';
@@ -208,33 +208,179 @@ export default function Dashboard() {
 
         {dashboard.profile && (
           <div className="bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-xl font-bold text-neutral-900 mb-4">Your Info</h2>
-            <div className="space-y-3 text-sm">
-              <div>
-                <span className="font-semibold text-neutral-700">Goals:</span>{' '}
-                <span className="text-neutral-600">{dashboard.profile.goals?.join(', ')}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-neutral-700">Training Experience:</span>{' '}
-                <span className="text-neutral-600">{dashboard.profile.training_experience}</span>
-              </div>
-              <div>
-                <span className="font-semibold text-neutral-700">Sessions per week:</span>{' '}
-                <span className="text-neutral-600">{dashboard.profile.sessions_per_week}</span>
-              </div>
-              {dashboard.profile.age && (
-                <div>
-                  <span className="font-semibold text-neutral-700">Age:</span>{' '}
-                  <span className="text-neutral-600">{dashboard.profile.age}</span>
-                </div>
-              )}
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-neutral-900">Your Profile</h2>
+              <button
+                onClick={() => navigate('/intake/step1')}
+                className="text-sm text-emerald-600 font-semibold hover:text-emerald-700 transition-colors"
+              >
+                Edit info
+              </button>
             </div>
-            <button
-              onClick={() => navigate('/intake/step1')}
-              className="mt-4 text-emerald-600 font-semibold hover:text-emerald-700"
-            >
-              Edit info
-            </button>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div className="flex items-start gap-3 p-4 bg-neutral-50 rounded-lg">
+                  <User className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-neutral-900 text-sm mb-2">Personal Details</h3>
+                    <div className="space-y-1 text-sm">
+                      {dashboard.profile.age && (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Age:</span> {dashboard.profile.age}
+                        </div>
+                      )}
+                      {dashboard.profile.gender && (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Gender:</span> {dashboard.profile.gender}
+                        </div>
+                      )}
+                      {(!dashboard.profile.age && !dashboard.profile.gender) && (
+                        <div className="text-neutral-400 italic">Not specified</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 bg-neutral-50 rounded-lg">
+                  <Dumbbell className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-neutral-900 text-sm mb-2">Training Profile</h3>
+                    <div className="space-y-1 text-sm">
+                      <div className="text-neutral-600">
+                        <span className="font-medium">Experience:</span> {dashboard.profile.training_experience}
+                      </div>
+                      <div className="text-neutral-600">
+                        <span className="font-medium">Sessions/week:</span> {dashboard.profile.sessions_per_week}
+                      </div>
+                      {dashboard.profile.weight_goal && (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Weight goal:</span> {dashboard.profile.weight_goal}
+                        </div>
+                      )}
+                      {dashboard.profile.goals && dashboard.profile.goals.length > 0 && (
+                        <div className="text-neutral-600 mt-2">
+                          <span className="font-medium">Goals:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {dashboard.profile.goals.map((goal: string, idx: number) => (
+                              <span key={idx} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs">
+                                {goal}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 bg-neutral-50 rounded-lg">
+                  <Heart className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-neutral-900 text-sm mb-2">Health Information</h3>
+                    <div className="space-y-1 text-sm">
+                      {dashboard.profile.chronic_diseases && dashboard.profile.chronic_diseases.length > 0 ? (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Chronic conditions:</span> {dashboard.profile.chronic_diseases.join(', ')}
+                        </div>
+                      ) : (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Chronic conditions:</span> <span className="text-neutral-400">None</span>
+                        </div>
+                      )}
+                      {dashboard.profile.injuries && dashboard.profile.injuries.length > 0 ? (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Injuries:</span> {dashboard.profile.injuries.join(', ')}
+                        </div>
+                      ) : (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Injuries:</span> <span className="text-neutral-400">None</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-start gap-3 p-4 bg-neutral-50 rounded-lg">
+                  <MapPinned className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-neutral-900 text-sm mb-2">Location & Format</h3>
+                    <div className="space-y-1 text-sm">
+                      {dashboard.profile.living_area && dashboard.profile.living_area.length > 0 ? (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Location:</span> {Array.isArray(dashboard.profile.living_area) ? dashboard.profile.living_area.join(', ') : dashboard.profile.living_area}
+                        </div>
+                      ) : (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Location:</span> <span className="text-neutral-400">Not specified</span>
+                        </div>
+                      )}
+                      {dashboard.profile.cooperation && dashboard.profile.cooperation.length > 0 ? (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Training format:</span> {Array.isArray(dashboard.profile.cooperation) ? dashboard.profile.cooperation.join(', ') : dashboard.profile.cooperation}
+                        </div>
+                      ) : (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Training format:</span> <span className="text-neutral-400">Not specified</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 bg-neutral-50 rounded-lg">
+                  <Clock className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-neutral-900 text-sm mb-2">Availability</h3>
+                    <div className="space-y-1 text-sm">
+                      {dashboard.profile.availability && dashboard.profile.availability.length > 0 ? (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Preferred days:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(Array.isArray(dashboard.profile.availability) ? dashboard.profile.availability : [dashboard.profile.availability]).map((day: string, idx: number) => (
+                              <span key={idx} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs">
+                                {day}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Preferred days:</span> <span className="text-neutral-400">Not specified</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-4 bg-neutral-50 rounded-lg">
+                  <DollarSign className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-neutral-900 text-sm mb-2">Budget</h3>
+                    <div className="space-y-1 text-sm">
+                      {dashboard.profile.monthly_budget && dashboard.profile.monthly_budget.length > 0 ? (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Monthly range:</span>
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {(Array.isArray(dashboard.profile.monthly_budget) ? dashboard.profile.monthly_budget : [dashboard.profile.monthly_budget]).map((budget: string, idx: number) => (
+                              <span key={idx} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs">
+                                {budget}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-neutral-600">
+                          <span className="font-medium">Monthly range:</span> <span className="text-neutral-400">Not specified</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

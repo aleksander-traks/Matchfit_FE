@@ -12,10 +12,10 @@ interface IntakeData {
   weight_goal: string;
   age: string;
   gender: string;
-  living_area: string;
-  monthly_budget: string;
-  availability: string;
-  cooperation: string;
+  living_area: string[];
+  monthly_budget: string[];
+  availability: string[];
+  cooperation: string[];
   overview: string;
   profileId?: string;
   isGeneratingOverview: boolean;
@@ -41,10 +41,10 @@ const initialIntakeData: IntakeData = {
   weight_goal: '',
   age: '',
   gender: '',
-  living_area: '',
-  monthly_budget: '',
-  availability: '',
-  cooperation: '',
+  living_area: [],
+  monthly_budget: [],
+  availability: [],
+  cooperation: [],
   overview: '',
   isGeneratingOverview: false,
   overviewError: null,

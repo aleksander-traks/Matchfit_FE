@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIntake } from '../../context/IntakeContext';
 import ProgressIndicator from '../../components/ProgressIndicator';
+import MultiSelect from '../../components/MultiSelect';
 import { CITIES_OPTIONS, MONTHLY_BUDGET_OPTIONS } from '../../constants/referenceData';
 
 export default function IntakeStep2() {
@@ -11,10 +12,10 @@ export default function IntakeStep2() {
   const [age, setAge] = useState(intakeData.age);
   const [gender, setGender] = useState(intakeData.gender);
   const [customGender, setCustomGender] = useState('');
-  const [livingArea, setLivingArea] = useState(intakeData.living_area);
-  const [monthlyBudget, setMonthlyBudget] = useState(intakeData.monthly_budget);
-  const [availability, setAvailability] = useState(intakeData.availability);
-  const [cooperation, setCooperation] = useState(intakeData.cooperation);
+  const [livingArea, setLivingArea] = useState<string[]>(intakeData.living_area);
+  const [monthlyBudget, setMonthlyBudget] = useState<string[]>(intakeData.monthly_budget);
+  const [availability, setAvailability] = useState<string[]>(intakeData.availability);
+  const [cooperation, setCooperation] = useState<string[]>(intakeData.cooperation);
 
   const handleNext = () => {
     const finalGender = gender === 'Other' ? customGender : gender;
@@ -77,34 +78,34 @@ export default function IntakeStep2() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Where do you live?
+              Where do you live? (Select one or more)
             </label>
-            <input
-              type="text"
+            <MultiSelect
+              options={CITIES_OPTIONS}
               value={livingArea}
-              onChange={(e) => setLivingArea(e.target.value)}
-              placeholder="Enter city"
-              list="cities"
-              className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              onChange={setLivingArea}
+              placeholder="Select cities"
+              allowOther={true}
             />
-            <datalist id="cities">
-              {CITIES_OPTIONS.map((city) => (
-                <option key={city} value={city} />
-              ))}
-            </datalist>
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Monthly budget for training
+              Monthly budget for training (Select all that apply)
             </label>
             <div className="flex flex-wrap gap-2">
               {MONTHLY_BUDGET_OPTIONS.map((budget) => (
                 <button
                   key={budget}
-                  onClick={() => setMonthlyBudget(budget)}
+                  onClick={() => {
+                    if (monthlyBudget.includes(budget)) {
+                      setMonthlyBudget(monthlyBudget.filter(b => b !== budget));
+                    } else {
+                      setMonthlyBudget([...monthlyBudget, budget]);
+                    }
+                  }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    monthlyBudget === budget
+                    monthlyBudget.includes(budget)
                       ? 'bg-emerald-600 text-white'
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
@@ -117,15 +118,21 @@ export default function IntakeStep2() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Preferred day for training
+              Preferred days for training (Select all that apply)
             </label>
             <div className="flex flex-wrap gap-2">
               {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
                 <button
                   key={day}
-                  onClick={() => setAvailability(day)}
+                  onClick={() => {
+                    if (availability.includes(day)) {
+                      setAvailability(availability.filter(d => d !== day));
+                    } else {
+                      setAvailability([...availability, day]);
+                    }
+                  }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    availability === day
+                    availability.includes(day)
                       ? 'bg-emerald-600 text-white'
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
@@ -138,15 +145,21 @@ export default function IntakeStep2() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Training format preference
+              Training format preference (Select all that apply)
             </label>
             <div className="flex flex-wrap gap-2">
-              {['On site', 'Remote', 'Hybrid'].map((coop) => (
+              {['On site', 'Remote'].map((coop) => (
                 <button
                   key={coop}
-                  onClick={() => setCooperation(coop)}
+                  onClick={() => {
+                    if (cooperation.includes(coop)) {
+                      setCooperation(cooperation.filter(c => c !== coop));
+                    } else {
+                      setCooperation([...cooperation, coop]);
+                    }
+                  }}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    cooperation === coop
+                    cooperation.includes(coop)
                       ? 'bg-emerald-600 text-white'
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
@@ -155,6 +168,7 @@ export default function IntakeStep2() {
                 </button>
               ))}
             </div>
+            <p className="text-xs text-neutral-500 mt-2">Tip: Select both for hybrid training options</p>
           </div>
 
           <div className="flex gap-3">

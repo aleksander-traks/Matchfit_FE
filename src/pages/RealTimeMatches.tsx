@@ -52,10 +52,17 @@ export default function RealTimeMatches() {
             reason_2: expert.reason2 || 'Excellent track record with similar clients',
           }));
 
+        console.log('🔄 RealTimeMatches: About to save matches', {
+          profileId,
+          matchCount: matchResults.length,
+          expertIds: matchResults.map(m => m.expert_id).slice(0, 5)
+        });
+
         try {
           await api.saveMatchResults(matchResults);
+          console.log('✅ RealTimeMatches: Matches saved successfully');
         } catch (error) {
-          console.error('Error saving match results:', error);
+          console.error('❌ RealTimeMatches: Error saving match results:', error);
         }
       };
 

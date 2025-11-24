@@ -24,10 +24,10 @@ class ApiClient {
     weight_goal: string;
     age?: string;
     gender?: string;
-    living_area?: string;
-    monthly_budget?: string;
-    availability?: string;
-    cooperation?: string;
+    living_area?: string[];
+    monthly_budget?: string[];
+    availability?: string[];
+    cooperation?: string[];
     overview?: string;
     profileId?: string;
   }) {
@@ -232,6 +232,9 @@ class ApiClient {
 
     const recommendations = generateDummyRecommendations(profile);
 
+    console.log('📊 Dashboard: Fetching matches for profile:', profile.id);
+    console.log('📊 Dashboard: Selected trainer to exclude:', selectedTrainer?.expert_id);
+
     let matchesQuery = supabase
       .from('match_results')
       .select('*')
@@ -244,7 +247,15 @@ class ApiClient {
 
     const { data: matches, error: matchesError } = await matchesQuery.limit(5);
 
-    if (matchesError) throw matchesError;
+    if (matchesError) {
+      console.error('❌ Dashboard: Error fetching matches:', matchesError);
+      throw matchesError;
+    }
+
+    console.log('📊 Dashboard: Raw matches from DB:', {
+      count: matches?.length || 0,
+      expertIds: matches?.map(m => m.expert_id) || []
+    });
 
     const enrichedMatches = await Promise.all(
       (matches || []).map(async (match) => {
@@ -256,11 +267,26 @@ class ApiClient {
       })
     );
 
+    const uniqueMatches = [];
+    const seenExpertIds = new Set();
+
+    for (const match of enrichedMatches) {
+      if (match.experts && !seenExpertIds.has(match.expert_id)) {
+        seenExpertIds.add(match.expert_id);
+        uniqueMatches.push(match);
+      }
+    }
+
+    console.log('📊 Dashboard: Unique matches after dedup:', {
+      count: uniqueMatches.length,
+      expertIds: uniqueMatches.map(m => m.expert_id)
+    });
+
     return {
       profile,
       selectedTrainer: enrichedTrainer,
       recommendations,
-      matches: enrichedMatches,
+      matches: uniqueMatches,
     };
   }
 
@@ -395,15 +421,25 @@ class ApiClient {
     reason_1: string;
     reason_2: string;
   }>) {
-    const { error } = await supabase
+    console.log('💾 Saving match results:', {
+      count: matchResults.length,
+      clientProfileId: matchResults[0]?.client_profile_id,
+      expertIds: matchResults.map(m => m.expert_id)
+    });
+
+    const { data, error } = await supabase
       .from('match_results')
-      .upsert(matchResults);
+      .upsert(matchResults, {
+        onConflict: 'client_profile_id,expert_id'
+      })
+      .select();
 
     if (error) {
-      console.error('Error saving match results:', error);
+      console.error('❌ Error saving match results:', error);
       throw error;
     }
 
+    console.log('✅ Successfully saved match results:', data?.length, 'records');
     return { success: true };
   }
 
