@@ -57,7 +57,29 @@ const IntakeContext = createContext<IntakeContextType | undefined>(undefined);
 export function IntakeProvider({ children }: { children: ReactNode }) {
   const [intakeData, setIntakeData] = useState<IntakeData>(() => {
     const stored = sessionStorage.getItem('intakeData');
-    return stored ? JSON.parse(stored) : initialIntakeData;
+    if (!stored) return initialIntakeData;
+
+    try {
+      const parsed = JSON.parse(stored);
+
+      // Migrate old string values to arrays for backward compatibility
+      const migrateToArray = (value: any): string[] => {
+        if (Array.isArray(value)) return value;
+        if (typeof value === 'string' && value.length > 0) return [value];
+        return [];
+      };
+
+      return {
+        ...parsed,
+        living_area: migrateToArray(parsed.living_area),
+        monthly_budget: migrateToArray(parsed.monthly_budget),
+        availability: migrateToArray(parsed.availability),
+        cooperation: migrateToArray(parsed.cooperation),
+      };
+    } catch (error) {
+      console.error('Error parsing stored intake data:', error);
+      return initialIntakeData;
+    }
   });
 
   useEffect(() => {
