@@ -156,7 +156,7 @@ export function useRealTimeMatching() {
     experts: ExpertWithMatchStatus[]
   ) => {
     const BATCH_SIZE = 2;
-    const topExperts = experts.slice(0, 5);
+    const topExperts = experts;
     let completedCount = 0;
 
     for (let i = 0; i < topExperts.length; i += BATCH_SIZE) {
@@ -199,7 +199,7 @@ export function useRealTimeMatching() {
       await Promise.all(batchPromises);
       completedCount += batch.length;
 
-      const progress = 85 + (15 * completedCount / topExperts.length);
+      const progress = 85 + (15 * completedCount / experts.length);
       setState(prev => ({
         ...prev,
         completedReasonsCount: completedCount,

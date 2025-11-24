@@ -167,9 +167,14 @@ class ApiClient {
   }
 
   async selectTrainer(clientProfileId: string, expertId: number) {
+    await supabase
+      .from('selected_trainers')
+      .delete()
+      .eq('client_profile_id', clientProfileId);
+
     const { data, error } = await supabase
       .from('selected_trainers')
-      .upsert({
+      .insert({
         client_profile_id: clientProfileId,
         expert_id: expertId,
       })
