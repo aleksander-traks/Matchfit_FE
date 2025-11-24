@@ -229,7 +229,10 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            <button className="mt-4 text-emerald-600 font-semibold hover:text-emerald-700">
+            <button
+              onClick={() => navigate('/intake/step1')}
+              className="mt-4 text-emerald-600 font-semibold hover:text-emerald-700"
+            >
               Edit info
             </button>
           </div>

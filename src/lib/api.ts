@@ -22,6 +22,12 @@ class ApiClient {
     chronic_diseases: string[];
     injuries: string[];
     weight_goal: string;
+    age?: string;
+    gender?: string;
+    living_area?: string;
+    monthly_budget?: string;
+    availability?: string;
+    cooperation?: string;
     overview?: string;
     profileId?: string;
   }) {
@@ -35,6 +41,12 @@ class ApiClient {
           chronic_diseases: data.chronic_diseases,
           injuries: data.injuries,
           weight_goal: data.weight_goal,
+          age: data.age ? parseInt(data.age) : null,
+          gender: data.gender || null,
+          living_area: data.living_area || null,
+          monthly_budget: data.monthly_budget || null,
+          availability: data.availability || null,
+          cooperation: data.cooperation || null,
           overview: data.overview ?? null,
           updated_at: new Date().toISOString(),
         })
@@ -55,6 +67,12 @@ class ApiClient {
           chronic_diseases: data.chronic_diseases,
           injuries: data.injuries,
           weight_goal: data.weight_goal,
+          age: data.age ? parseInt(data.age) : null,
+          gender: data.gender || null,
+          living_area: data.living_area || null,
+          monthly_budget: data.monthly_budget || null,
+          availability: data.availability || null,
+          cooperation: data.cooperation || null,
           overview: data.overview ?? null,
         })
         .select()
@@ -214,12 +232,17 @@ class ApiClient {
 
     const recommendations = generateDummyRecommendations(profile);
 
-    const { data: matches, error: matchesError } = await supabase
+    let matchesQuery = supabase
       .from('match_results')
       .select('*')
       .eq('client_profile_id', profile.id)
-      .order('match_score', { ascending: false })
-      .limit(5);
+      .order('match_score', { ascending: false });
+
+    if (selectedTrainer) {
+      matchesQuery = matchesQuery.neq('expert_id', selectedTrainer.expert_id);
+    }
+
+    const { data: matches, error: matchesError } = await matchesQuery.limit(5);
 
     if (matchesError) throw matchesError;
 
