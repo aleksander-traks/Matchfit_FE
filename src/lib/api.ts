@@ -367,6 +367,55 @@ class ApiClient {
     return introCall;
   }
 
+  async getAllExperts() {
+    const { data: experts, error } = await supabase
+      .from('experts')
+      .select('*')
+      .order('id', { ascending: true });
+
+    if (error) throw error;
+    if (!experts) return [];
+
+    const expertIds = experts.map(e => e.id);
+
+    const { data: selectedTrainers } = await supabase
+      .from('selected_trainers')
+      .select('expert_id')
+      .in('expert_id', expertIds);
+
+    const { data: matchResults } = await supabase
+      .from('match_results')
+      .select('expert_id')
+      .in('expert_id', expertIds);
+
+    const { data: introCalls } = await supabase
+      .from('intro_calls')
+      .select('expert_id')
+      .in('expert_id', expertIds);
+
+    const selectedMap = new Map<number, number>();
+    (selectedTrainers || []).forEach(st => {
+      selectedMap.set(st.expert_id, (selectedMap.get(st.expert_id) || 0) + 1);
+    });
+
+    const matchMap = new Map<number, number>();
+    (matchResults || []).forEach(mr => {
+      matchMap.set(mr.expert_id, (matchMap.get(mr.expert_id) || 0) + 1);
+    });
+
+    const introMap = new Map<number, number>();
+    (introCalls || []).forEach(ic => {
+      introMap.set(ic.expert_id, (introMap.get(ic.expert_id) || 0) + 1);
+    });
+
+    return experts.map(e => ({
+      ...e,
+      selected_count: selectedMap.get(e.id) ?? 0,
+      matched_count: matchMap.get(e.id) ?? 0,
+      intro_call_count: introMap.get(e.id) ?? 0,
+    }));
+  }
+
   async getAllClientProfiles() {
     const { data: profiles, error } = await supabase
       .from('client_profiles')
