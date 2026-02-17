@@ -8,6 +8,8 @@ import Matches from './pages/Matches';
 import RealTimeMatches from './pages/RealTimeMatches';
 import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
+import Admin from './pages/Admin';
+import AdminUserDetail from './pages/AdminUserDetail';
 
 function App() {
   return (
@@ -22,6 +24,8 @@ function App() {
           <Route path="/realtime-matches" element={<RealTimeMatches />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/chat/:clientProfileId/:expertId" element={<Chat />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/:profileId" element={<AdminUserDetail />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

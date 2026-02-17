@@ -367,6 +367,98 @@ class ApiClient {
     return introCall;
   }
 
+  async getAllClientProfiles() {
+    const { data: profiles, error } = await supabase
+      .from('client_profiles')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    if (!profiles) return [];
+
+    const profileIds = profiles.map(p => p.id);
+
+    const { data: selectedTrainers } = await supabase
+      .from('selected_trainers')
+      .select('client_profile_id, expert_id')
+      .in('client_profile_id', profileIds);
+
+    const { data: matchCounts } = await supabase
+      .from('match_results')
+      .select('client_profile_id')
+      .in('client_profile_id', profileIds);
+
+    const trainerMap = new Map<string, number>();
+    (selectedTrainers || []).forEach(st => trainerMap.set(st.client_profile_id, st.expert_id));
+
+    const countMap = new Map<string, number>();
+    (matchCounts || []).forEach(m => {
+      countMap.set(m.client_profile_id, (countMap.get(m.client_profile_id) || 0) + 1);
+    });
+
+    return profiles.map(p => ({
+      ...p,
+      selected_expert_id: trainerMap.get(p.id) ?? null,
+      match_count: countMap.get(p.id) ?? 0,
+    }));
+  }
+
+  async getAdminUserDetail(profileId: string) {
+    const { data: profile, error: profileError } = await supabase
+      .from('client_profiles')
+      .select('*')
+      .eq('id', profileId)
+      .maybeSingle();
+
+    if (profileError) throw profileError;
+    if (!profile) return null;
+
+    const { data: matchResults } = await supabase
+      .from('match_results')
+      .select('*')
+      .eq('client_profile_id', profileId)
+      .order('match_score', { ascending: false });
+
+    const { data: selectedTrainer } = await supabase
+      .from('selected_trainers')
+      .select('*')
+      .eq('client_profile_id', profileId)
+      .maybeSingle();
+
+    const { data: introCalls } = await supabase
+      .from('intro_calls')
+      .select('*')
+      .eq('client_profile_id', profileId)
+      .order('created_at', { ascending: false });
+
+    const enrichedMatches = await Promise.all(
+      (matchResults || []).map(async (match) => {
+        const expertData = await getExpertById(match.expert_id);
+        return { ...match, expert: expertData || null };
+      })
+    );
+
+    let enrichedSelectedTrainer = null;
+    if (selectedTrainer) {
+      const expertData = await getExpertById(selectedTrainer.expert_id);
+      enrichedSelectedTrainer = { ...selectedTrainer, expert: expertData || null };
+    }
+
+    const enrichedIntroCalls = await Promise.all(
+      (introCalls || []).map(async (call) => {
+        const expertData = await getExpertById(call.expert_id);
+        return { ...call, expert: expertData || null };
+      })
+    );
+
+    return {
+      profile,
+      matches: enrichedMatches,
+      selectedTrainer: enrichedSelectedTrainer,
+      introCalls: enrichedIntroCalls,
+    };
+  }
+
   async updateProfile(profileId: string, updates: any) {
     const { data, error } = await supabase
       .from('client_profiles')
