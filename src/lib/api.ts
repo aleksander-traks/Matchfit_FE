@@ -531,6 +531,119 @@ class ApiClient {
     return data;
   }
 
+  async sendExpertMessage(clientProfileId: string, expertId: number, content: string) {
+    const { data, error } = await supabase
+      .from('messages')
+      .insert({
+        client_profile_id: clientProfileId,
+        expert_id: expertId,
+        sender: 'expert',
+        content,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
+  async markMessagesAsRead(clientProfileId: string, expertId: number) {
+    const { error } = await supabase
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('client_profile_id', clientProfileId)
+      .eq('expert_id', expertId)
+      .eq('sender', 'client')
+      .is('read_at', null);
+
+    if (error) throw error;
+  }
+
+  async getExpertConversations(expertId: number) {
+    const { data, error } = await supabase
+      .from('messages')
+      .select('client_profile_id, created_at, content, sender')
+      .eq('expert_id', expertId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    if (!data) return [];
+
+    const conversationMap = new Map<string, { lastMessage: string; lastTime: string; unreadCount: number; lastSender: string }>();
+    for (const msg of data) {
+      if (!conversationMap.has(msg.client_profile_id)) {
+        conversationMap.set(msg.client_profile_id, {
+          lastMessage: msg.content,
+          lastTime: msg.created_at,
+          unreadCount: 0,
+          lastSender: msg.sender,
+        });
+      }
+    }
+
+    const { data: unreadData } = await supabase
+      .from('messages')
+      .select('client_profile_id')
+      .eq('expert_id', expertId)
+      .eq('sender', 'client')
+      .is('read_at', null);
+
+    const unreadMap = new Map<string, number>();
+    (unreadData || []).forEach(row => {
+      unreadMap.set(row.client_profile_id, (unreadMap.get(row.client_profile_id) || 0) + 1);
+    });
+
+    const profileIds = Array.from(conversationMap.keys());
+    const profiles: any[] = [];
+    for (const profileId of profileIds) {
+      const { data: profile } = await supabase
+        .from('client_profiles')
+        .select('id, email, goals, training_experience, created_at')
+        .eq('id', profileId)
+        .maybeSingle();
+      if (profile) profiles.push(profile);
+    }
+
+    return profileIds.map(profileId => {
+      const conv = conversationMap.get(profileId)!;
+      const profile = profiles.find(p => p.id === profileId);
+      return {
+        clientProfileId: profileId,
+        lastMessage: conv.lastMessage,
+        lastTime: conv.lastTime,
+        lastSender: conv.lastSender,
+        unreadCount: unreadMap.get(profileId) || 0,
+        clientEmail: profile?.email || null,
+        clientGoals: profile?.goals || [],
+        clientTrainingExperience: profile?.training_experience || null,
+      };
+    });
+  }
+
+  async getExpertByToken(token: string) {
+    const { data: tokenRow, error: tokenError } = await supabase
+      .from('expert_access_tokens')
+      .select('expert_id')
+      .eq('token', token)
+      .maybeSingle();
+
+    if (tokenError || !tokenRow) return null;
+
+    await supabase
+      .from('expert_access_tokens')
+      .update({ last_used_at: new Date().toISOString() })
+      .eq('token', token);
+
+    const { data: expert, error: expertError } = await supabase
+      .from('experts')
+      .select('*')
+      .eq('id', tokenRow.expert_id)
+      .maybeSingle();
+
+    if (expertError || !expert) return null;
+    return expert;
+  }
+
   async getMatchResults(clientProfileId: string) {
     const { data, error } = await supabase
       .from('match_results')

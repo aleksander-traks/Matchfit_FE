@@ -10,6 +10,8 @@ import Dashboard from './pages/Dashboard';
 import Chat from './pages/Chat';
 import Admin from './pages/Admin';
 import AdminUserDetail from './pages/AdminUserDetail';
+import TrainerInbox from './pages/TrainerInbox';
+import TrainerChat from './pages/TrainerChat';
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
           <Route path="/chat/:clientProfileId/:expertId" element={<Chat />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/admin/:profileId" element={<AdminUserDetail />} />
+          <Route path="/trainer/:expertId" element={<TrainerInbox />} />
+          <Route path="/trainer/:expertId/chat/:clientProfileId" element={<TrainerChat />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

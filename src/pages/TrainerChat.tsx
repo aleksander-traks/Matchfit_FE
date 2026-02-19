@@ -1,9 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
+import { ArrowLeft, Send, User, Check, CheckCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Send, Check, CheckCheck } from 'lucide-react';
-import EmailCollectionModal from '../components/EmailCollectionModal';
 import Toast from '../components/Toast';
 
 interface Expert {
@@ -13,44 +12,47 @@ interface Expert {
   specialization?: string;
 }
 
-export default function Chat() {
-  const { clientProfileId, expertId } = useParams();
+export default function TrainerChat() {
+  const { expertId, clientProfileId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const token = searchParams.get('token');
 
   const [messages, setMessages] = useState<any[]>([]);
   const [expert, setExpert] = useState<Expert | null>(null);
+  const [clientEmail, setClientEmail] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
-  const [clientEmail, setClientEmail] = useState<string | null>(null);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [pendingMessage, setPendingMessage] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!clientProfileId || !expertId) return;
+    if (!expertId || !clientProfileId) return;
 
-    Promise.all([
-      api.getMessages(clientProfileId, parseInt(expertId)),
-      api.getClientProfile(clientProfileId),
-      supabase.from('experts').select('*').eq('id', parseInt(expertId)).maybeSingle(),
-    ])
-      .then(([msgs, profile, expertResult]) => {
-        setMessages(msgs);
-        if (profile?.email) setClientEmail(profile.email);
-        setExpert(expertResult.data);
-      })
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }, [clientProfileId, expertId]);
+    const init = async () => {
+      const [msgs, profile, expertData] = await Promise.all([
+        api.getMessages(clientProfileId, parseInt(expertId)),
+        api.getClientProfile(clientProfileId),
+        supabase.from('experts').select('*').eq('id', parseInt(expertId)).maybeSingle(),
+      ]);
+
+      setMessages(msgs);
+      setClientEmail(profile?.email || null);
+      setExpert(expertData.data);
+
+      await api.markMessagesAsRead(clientProfileId, parseInt(expertId));
+      setIsLoading(false);
+    };
+
+    init().catch(() => setIsLoading(false));
+  }, [expertId, clientProfileId]);
 
   useEffect(() => {
-    if (!clientProfileId || !expertId) return;
+    if (!expertId || !clientProfileId) return;
 
     const channel = supabase
-      .channel(`client-chat-${clientProfileId}-${expertId}`)
+      .channel(`trainer-chat-${expertId}-${clientProfileId}`)
       .on(
         'postgres_changes',
         {
@@ -60,25 +62,13 @@ export default function Chat() {
           filter: `client_profile_id=eq.${clientProfileId}`,
         },
         (payload) => {
-          if (payload.new.expert_id !== parseInt(expertId)) return;
           setMessages((prev) => {
             if (prev.find((m) => m.id === payload.new.id)) return prev;
             return [...prev, payload.new];
           });
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'messages',
-          filter: `client_profile_id=eq.${clientProfileId}`,
-        },
-        (payload) => {
-          setMessages((prev) =>
-            prev.map((m) => (m.id === payload.new.id ? { ...m, ...payload.new } : m))
-          );
+          if (payload.new.sender === 'client') {
+            api.markMessagesAsRead(clientProfileId!, parseInt(expertId!));
+          }
         }
       )
       .subscribe();
@@ -86,7 +76,7 @@ export default function Chat() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [clientProfileId, expertId]);
+  }, [expertId, clientProfileId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -96,26 +86,11 @@ export default function Chat() {
     e.preventDefault();
     if (!newMessage.trim() || !clientProfileId || !expertId) return;
 
-    if (!clientEmail) {
-      setPendingMessage(newMessage);
-      setShowEmailModal(true);
-      return;
-    }
-
-    await sendMessageWithEmail(newMessage, clientEmail);
-  };
-
-  const sendMessageWithEmail = async (content: string, email: string) => {
     setIsSending(true);
     try {
-      const message = await api.sendMessage(clientProfileId!, parseInt(expertId!), content, email);
+      const message = await api.sendExpertMessage(clientProfileId, parseInt(expertId), newMessage.trim());
       setMessages((prev) => [...prev, message]);
       setNewMessage('');
-      setPendingMessage(null);
-      if (!clientEmail) {
-        setClientEmail(email);
-        setToast({ message: "Email saved! You'll be notified when your trainer responds.", type: 'success' });
-      }
     } catch (error: any) {
       setToast({ message: error.message || 'Failed to send message', type: 'error' });
     } finally {
@@ -123,15 +98,9 @@ export default function Chat() {
     }
   };
 
-  const handleEmailSubmit = async (email: string) => {
-    if (pendingMessage) {
-      await sendMessageWithEmail(pendingMessage, email);
-      setShowEmailModal(false);
-    }
-  };
-
   const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
   const formatDate = (timestamp: string) => {
@@ -159,14 +128,17 @@ export default function Chat() {
     return groups;
   };
 
-  const lastClientMessage = [...messages].reverse().find((m) => m.sender === 'client');
+  const handleBack = () => {
+    const tokenParam = token ? `?token=${token}` : '';
+    navigate(`/trainer/${expertId}${tokenParam}`);
+  };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading chat...</p>
+          <p className="text-neutral-600">Loading conversation...</p>
         </div>
       </div>
     );
@@ -178,33 +150,19 @@ export default function Chat() {
         <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <button
-              onClick={() => navigate('/dashboard')}
+              onClick={handleBack}
               className="text-neutral-600 hover:text-neutral-900 transition-colors p-1 rounded-lg hover:bg-neutral-100"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-
-            {expert?.image ? (
-              <img
-                src={expert.image}
-                alt={expert.name}
-                className="w-9 h-9 rounded-full object-cover ring-2 ring-emerald-100 flex-shrink-0"
-              />
-            ) : (
-              <div className="w-9 h-9 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-emerald-700 text-sm font-bold">
-                  {expert?.name?.charAt(0) || 'T'}
-                </span>
-              </div>
-            )}
-
+            <div className="w-9 h-9 bg-neutral-100 rounded-full flex items-center justify-center flex-shrink-0">
+              <User className="w-4 h-4 text-neutral-500" />
+            </div>
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-bold text-neutral-900 truncate">
-                {expert?.name || 'Your Trainer'}
+                {clientEmail || `Client ${clientProfileId?.slice(0, 8)}...`}
               </h2>
-              <p className="text-xs text-neutral-500 truncate">
-                {expert?.specialization || 'Personal Trainer'}
-              </p>
+              <p className="text-xs text-neutral-500">Replying as {expert?.name}</p>
             </div>
           </div>
         </div>
@@ -212,18 +170,8 @@ export default function Chat() {
         <div className="flex-1 overflow-y-auto">
           <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
             {messages.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-14 h-14 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                  {expert?.image ? (
-                    <img src={expert.image} alt={expert.name} className="w-14 h-14 rounded-full object-cover" />
-                  ) : (
-                    <span className="text-emerald-700 text-xl font-bold">
-                      {expert?.name?.charAt(0) || 'T'}
-                    </span>
-                  )}
-                </div>
-                <p className="text-neutral-600 font-medium">{expert?.name || 'Your Trainer'}</p>
-                <p className="text-neutral-400 text-sm mt-1">Send a message to start the conversation</p>
+              <div className="text-center text-neutral-500 py-12 text-sm">
+                No messages yet. The client hasn't sent anything.
               </div>
             )}
 
@@ -239,40 +187,30 @@ export default function Chat() {
                   {group.messages.map((message) => (
                     <div
                       key={message.id}
-                      className={`flex ${message.sender === 'client' ? 'justify-end' : 'justify-start'}`}
+                      className={`flex ${message.sender === 'expert' ? 'justify-end' : 'justify-start'}`}
                     >
-                      {message.sender === 'expert' && expert?.image && (
-                        <img
-                          src={expert.image}
-                          alt={expert.name}
-                          className="w-7 h-7 rounded-full object-cover mr-2 mt-1 flex-shrink-0"
-                        />
-                      )}
-                      {message.sender === 'expert' && !expert?.image && (
-                        <div className="w-7 h-7 bg-emerald-100 rounded-full flex items-center justify-center mr-2 mt-1 flex-shrink-0">
-                          <span className="text-emerald-700 text-xs font-bold">
-                            {expert?.name?.charAt(0) || 'T'}
-                          </span>
+                      {message.sender === 'client' && (
+                        <div className="w-7 h-7 bg-neutral-200 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-1">
+                          <User className="w-3.5 h-3.5 text-neutral-500" />
                         </div>
                       )}
-
                       <div
                         className={`max-w-xs md:max-w-md px-4 py-2.5 rounded-2xl ${
-                          message.sender === 'client'
+                          message.sender === 'expert'
                             ? 'bg-emerald-600 text-white rounded-br-sm'
                             : 'bg-white text-neutral-900 border border-neutral-200 rounded-bl-sm shadow-sm'
                         }`}
                       >
                         <p className="text-sm leading-relaxed">{message.content}</p>
-                        <div className={`flex items-center gap-1 mt-1 ${message.sender === 'client' ? 'justify-end' : 'justify-start'}`}>
-                          <span className={`text-xs ${message.sender === 'client' ? 'text-emerald-100' : 'text-neutral-400'}`}>
+                        <div className={`flex items-center gap-1 mt-1 ${message.sender === 'expert' ? 'justify-end' : 'justify-start'}`}>
+                          <span className={`text-xs ${message.sender === 'expert' ? 'text-emerald-100' : 'text-neutral-400'}`}>
                             {formatTime(message.created_at)}
                           </span>
-                          {message.sender === 'client' && message.id === lastClientMessage?.id && (
+                          {message.sender === 'expert' && (
                             message.read_at ? (
-                              <CheckCheck className="w-3 h-3 text-emerald-200" title="Read" />
+                              <CheckCheck className="w-3 h-3 text-emerald-200" />
                             ) : (
-                              <Check className="w-3 h-3 text-emerald-300" title="Sent" />
+                              <Check className="w-3 h-3 text-emerald-300" />
                             )
                           )}
                         </div>
@@ -282,19 +220,17 @@ export default function Chat() {
                 </div>
               </div>
             ))}
-
             <div ref={messagesEndRef} />
           </div>
         </div>
 
-        <div className="bg-white border-t border-neutral-200">
+        <div className="bg-white border-t border-neutral-200 safe-bottom">
           <form onSubmit={handleSend} className="max-w-2xl mx-auto px-4 py-3 flex gap-2">
             <input
-              ref={inputRef}
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Message your trainer..."
+              placeholder={`Reply as ${expert?.name || 'trainer'}...`}
               className="flex-1 px-4 py-2.5 bg-neutral-100 border border-transparent rounded-xl focus:outline-none focus:border-emerald-300 focus:bg-white transition-colors text-sm"
               disabled={isSending}
             />
@@ -309,17 +245,6 @@ export default function Chat() {
           </form>
         </div>
       </div>
-
-      <EmailCollectionModal
-        isOpen={showEmailModal}
-        onClose={() => {
-          setShowEmailModal(false);
-          setPendingMessage(null);
-        }}
-        onSubmit={handleEmailSubmit}
-        title="Stay Connected"
-        message="We'll notify you when your trainer responds to your message."
-      />
 
       {toast && (
         <Toast

@@ -6,9 +6,10 @@ interface ExpertCardProps {
   position: number;
   isAnimating: boolean;
   onChoose?: (expertId: number) => void;
+  onMessage?: (expertId: number) => void;
 }
 
-export default function ExpertCard({ expert, position, isAnimating, onChoose }: ExpertCardProps) {
+export default function ExpertCard({ expert, position, isAnimating, onChoose, onMessage }: ExpertCardProps) {
   const matchPercentage = expert.match_score ? Math.round(expert.match_score) : null;
   const showScoreLoader = expert.matchStatus === 'pending' || expert.matchStatus === 'calculating-score';
   const showReasonsLoader = expert.matchStatus === 'calculating-reasons' && expert.reasonsLoading;
@@ -123,6 +124,7 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose }: 
           Choose this trainer
         </button>
         <button
+          onClick={() => onMessage?.(expert.id)}
           disabled={!isComplete || !matchPercentage}
           className="px-6 py-3 border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >

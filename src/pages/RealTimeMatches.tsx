@@ -82,6 +82,11 @@ export default function RealTimeMatches() {
     }
   };
 
+  const handleMessageTrainer = (expertId: number) => {
+    if (!profileId) return;
+    navigate(`/chat/${profileId}/${expertId}`);
+  };
+
   if (error) {
     return (
       <div className="min-h-screen bg-neutral-50 py-8">
@@ -141,6 +146,7 @@ export default function RealTimeMatches() {
                 position={index}
                 isAnimating={isAnimating}
                 onChoose={handleChooseTrainer}
+                onMessage={handleMessageTrainer}
               />
             </div>
           ))}
