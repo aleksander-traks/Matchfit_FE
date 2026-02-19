@@ -12,6 +12,7 @@ import Admin from './pages/Admin';
 import AdminUserDetail from './pages/AdminUserDetail';
 import TrainerInbox from './pages/TrainerInbox';
 import TrainerChat from './pages/TrainerChat';
+import FeedbackButton from './components/FeedbackButton';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
           <Route path="/trainer/:expertId/chat/:clientProfileId" element={<TrainerChat />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <FeedbackButton />
       </BrowserRouter>
     </IntakeProvider>
   );

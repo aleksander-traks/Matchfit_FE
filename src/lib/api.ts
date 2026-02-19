@@ -790,6 +790,22 @@ class ApiClient {
       },
     });
   }
+
+  async submitFeedback(data: {
+    page: string;
+    rating: number;
+    message?: string;
+    clientProfileId?: string;
+  }): Promise<void> {
+    const { error } = await supabase.from('feedback').insert({
+      page: data.page,
+      rating: data.rating,
+      message: data.message || '',
+      client_profile_id: data.clientProfileId || null,
+    });
+
+    if (error) throw error;
+  }
 }
 
 export const api = new ApiClient();
