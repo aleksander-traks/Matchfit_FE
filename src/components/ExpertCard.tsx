@@ -1,4 +1,4 @@
-import { Star, Award, DollarSign, Calendar, MapPin, Loader2, ChevronDown } from 'lucide-react';
+import { Award, DollarSign, Calendar, MapPin, Loader2, ChevronDown } from 'lucide-react';
 import type { ExpertWithMatchStatus } from '../data/expertsData';
 
 interface ExpertCardProps {
@@ -20,10 +20,8 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
     .map((item) => item.trim())
     .filter(Boolean);
 
-  const previewSpecialties = specialties.slice(0, 2);
-  const hiddenSpecialtyCount = Math.max(specialties.length - previewSpecialties.length, 0);
   const hasReasons = Boolean(expert.reason1 || expert.reason2 || showReasonsLoader);
-  const showExpandableSection = hasReasons || specialties.length > 2;
+  const showExpandableSection = hasReasons || specialties.length > 0 || Boolean(expert.availability);
 
   return (
     <div
@@ -54,30 +52,10 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
         <div className="flex-1 min-w-0">
           <h3 className="text-xl font-bold text-neutral-900 leading-tight mb-1">{expert.name}</h3>
 
-          <div className="flex flex-wrap gap-2 mb-2">
-            {previewSpecialties.map((specialty) => (
-              <span
-                key={specialty}
-                className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100"
-              >
-                {specialty}
-              </span>
-            ))}
-            {hiddenSpecialtyCount > 0 && (
-              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-neutral-100 text-neutral-600">
-                +{hiddenSpecialtyCount} more
-              </span>
-            )}
-          </div>
-
           <div className="flex items-center gap-3 text-sm text-neutral-600">
             <span className="flex items-center gap-1">
               <Award className="w-4 h-4" />
               {expert.years_of_experience} years
-            </span>
-            <span className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              {expert.client_ratings}/5
             </span>
           </div>
         </div>
@@ -99,14 +77,10 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-sm">
         <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
           <DollarSign className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">{expert.monthly_budget}</span>
-        </div>
-        <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
-          <Calendar className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">{expert.availability}</span>
         </div>
         <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
           <MapPin className="w-4 h-4 flex-shrink-0" />
@@ -118,20 +92,31 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
         <details className="group mb-4">
           <summary className="list-none cursor-pointer inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-800">
             See more details
+            {specialties.length > 0 && <span className="text-neutral-500">({specialties.length} specializations)</span>}
             <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180" />
           </summary>
 
           <div className="mt-3 space-y-3 animate-fadeIn">
-            {specialties.length > 2 && (
-              <div className="flex flex-wrap gap-2">
-                {specialties.slice(2).map((specialty) => (
+            {specialties.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-neutral-900 mb-2">Specializations</h4>
+                <div className="flex flex-wrap gap-2">
+                  {specialties.map((specialty) => (
                   <span
-                    key={`${specialty}-extra`}
+                    key={`${specialty}-detail`}
                     className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100"
                   >
                     {specialty}
                   </span>
-                ))}
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {expert.availability && (
+              <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2 text-sm">
+                <Calendar className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{expert.availability}</span>
               </div>
             )}
 
