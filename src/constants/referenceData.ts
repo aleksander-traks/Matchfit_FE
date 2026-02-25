@@ -169,7 +169,7 @@ export const INJURIES_OPTIONS = [
 
 export const WEIGHT_GOAL_OPTIONS = ['Lose Weight', 'Gain Weight', 'Maintain Weight'];
 
-export const MONTHLY_BUDGET_OPTIONS = ['0-30€', '30-60€', '60-100€', '100-200€', '200-500€', '500€+'];
+export const MONTHLY_BUDGET_OPTIONS = ['0-30zł', '30-60zł', '60-100zł', '100-200zł', '200-500zł', '500zł+'];
 
 export const AVAILABILITY_OPTIONS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
