@@ -4,7 +4,7 @@ import { api } from '../lib/api';
 import {
   Users,
   Search,
-  ChevronRight,
+  ChevronRight 
   MapPin,
   Target,
   DollarSign,
