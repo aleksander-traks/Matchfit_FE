@@ -1,4 +1,4 @@
-import { Star, Award, DollarSign, Calendar, MapPin, Loader2 } from 'lucide-react';
+import { Star, Award, DollarSign, Calendar, MapPin, Loader2, ChevronDown } from 'lucide-react';
 import type { ExpertWithMatchStatus } from '../data/expertsData';
 
 interface ExpertCardProps {
@@ -15,21 +15,31 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
   const showReasonsLoader = expert.matchStatus === 'calculating-reasons' && expert.reasonsLoading;
   const isComplete = expert.matchStatus === 'complete' || expert.matchStatus === 'score-complete';
 
+  const specialties = expert.specialization
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const previewSpecialties = specialties.slice(0, 2);
+  const hiddenSpecialtyCount = Math.max(specialties.length - previewSpecialties.length, 0);
+  const hasReasons = Boolean(expert.reason1 || expert.reason2 || showReasonsLoader);
+  const showExpandableSection = hasReasons || specialties.length > 2;
+
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm p-6 transition-all duration-700 ease-out ${
+      className={`bg-white rounded-2xl border border-emerald-100/70 shadow-sm p-5 transition-all duration-700 ease-out hover:shadow-lg hover:border-emerald-200 ${
         isAnimating ? 'transform scale-95' : 'transform scale-100'
       }`}
       style={{
         transform: isAnimating ? `translateY(${position * 10}px)` : 'translateY(0)',
       }}
     >
-      <div className="flex gap-4 mb-4">
+      <div className="flex items-start gap-4 mb-4">
         <div className="relative">
           <img
             src={expert.image}
             alt={expert.name}
-            className="w-20 h-20 rounded-full object-cover ring-2 ring-emerald-100"
+            className="w-20 h-20 rounded-full object-cover ring-4 ring-emerald-100"
             loading="lazy"
           />
           {isComplete && matchPercentage && matchPercentage >= 70 && (
@@ -41,9 +51,25 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
           )}
         </div>
 
-        <div className="flex-1">
-          <h3 className="text-xl font-bold text-neutral-900 mb-1">{expert.name}</h3>
-          <p className="text-sm text-emerald-600 font-medium mb-2">{expert.specialization}</p>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xl font-bold text-neutral-900 leading-tight mb-1">{expert.name}</h3>
+
+          <div className="flex flex-wrap gap-2 mb-2">
+            {previewSpecialties.map((specialty) => (
+              <span
+                key={specialty}
+                className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100"
+              >
+                {specialty}
+              </span>
+            ))}
+            {hiddenSpecialtyCount > 0 && (
+              <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-neutral-100 text-neutral-600">
+                +{hiddenSpecialtyCount} more
+              </span>
+            )}
+          </div>
+
           <div className="flex items-center gap-3 text-sm text-neutral-600">
             <span className="flex items-center gap-1">
               <Award className="w-4 h-4" />
@@ -56,15 +82,15 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
           </div>
         </div>
 
-        <div className="text-right">
+        <div className="text-right min-w-[86px]">
           {showScoreLoader ? (
             <div className="flex flex-col items-center justify-center h-full">
               <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mb-1" />
               <div className="text-xs text-neutral-500">Calculating...</div>
             </div>
           ) : matchPercentage !== null ? (
-            <div className="animate-fadeIn">
-              <div className="text-3xl font-bold text-emerald-600">{matchPercentage}%</div>
+            <div className="animate-fadeIn rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2">
+              <div className="text-3xl font-bold text-emerald-600 leading-none">{matchPercentage}%</div>
               <div className="text-sm text-neutral-600">Match</div>
             </div>
           ) : (
@@ -73,60 +99,80 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3 mb-4 text-sm">
-        <div className="flex items-center gap-2 text-neutral-700">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3 text-sm">
+        <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
           <DollarSign className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">{expert.monthly_budget}</span>
         </div>
-        <div className="flex items-center gap-2 text-neutral-700">
+        <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
           <Calendar className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">{expert.availability}</span>
         </div>
-        <div className="flex items-center gap-2 text-neutral-700">
+        <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
           <MapPin className="w-4 h-4 flex-shrink-0" />
           <span className="truncate">{expert.cooperation}</span>
         </div>
       </div>
 
-      {(expert.reason1 || expert.reason2 || showReasonsLoader) && matchPercentage && matchPercentage >= 60 && (
-        <div className="bg-emerald-50 rounded-lg p-4 mb-4">
-          <h4 className="font-semibold text-neutral-900 mb-2">Why this trainer?</h4>
-          {showReasonsLoader ? (
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
-                <div className="h-4 bg-emerald-100 rounded animate-pulse flex-1"></div>
+      {showExpandableSection && (
+        <details className="group mb-4">
+          <summary className="list-none cursor-pointer inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-800">
+            See more details
+            <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180" />
+          </summary>
+
+          <div className="mt-3 space-y-3 animate-fadeIn">
+            {specialties.length > 2 && (
+              <div className="flex flex-wrap gap-2">
+                {specialties.slice(2).map((specialty) => (
+                  <span
+                    key={`${specialty}-extra`}
+                    className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100"
+                  >
+                    {specialty}
+                  </span>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
-                <div className="h-4 bg-emerald-100 rounded animate-pulse flex-1"></div>
+            )}
+
+            {hasReasons && matchPercentage && matchPercentage >= 60 && (
+              <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-4">
+                <h4 className="font-semibold text-neutral-900 mb-2">Why this trainer?</h4>
+                {showReasonsLoader ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                      <div className="h-4 bg-emerald-100 rounded animate-pulse flex-1"></div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 text-emerald-600 animate-spin" />
+                      <div className="h-4 bg-emerald-100 rounded animate-pulse flex-1"></div>
+                    </div>
+                  </div>
+                ) : (
+                  <ul className="space-y-1 text-sm text-neutral-700">
+                    {expert.reason1 && <li>• {expert.reason1}</li>}
+                    {expert.reason2 && <li>• {expert.reason2}</li>}
+                  </ul>
+                )}
               </div>
-            </div>
-          ) : (
-            <ul className="space-y-1 text-sm text-neutral-700">
-              {expert.reason1 && (
-                <li className="animate-fadeIn">• {expert.reason1}</li>
-              )}
-              {expert.reason2 && (
-                <li className="animate-fadeIn animation-delay-200">• {expert.reason2}</li>
-              )}
-            </ul>
-          )}
-        </div>
+            )}
+          </div>
+        </details>
       )}
 
       <div className="flex gap-3">
         <button
           onClick={() => onChoose?.(expert.id)}
           disabled={!isComplete || !matchPercentage}
-          className="flex-1 bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed"
+          className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition-colors shadow-sm hover:shadow-md disabled:bg-neutral-300 disabled:cursor-not-allowed"
         >
           Choose this trainer
         </button>
         <button
           onClick={() => onMessage?.(expert.id)}
           disabled={!isComplete || !matchPercentage}
-          className="px-6 py-3 border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-3 border border-neutral-300 rounded-xl font-semibold hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Message
         </button>
