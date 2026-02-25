@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
-import { Star, MessageCircle, Award, Calendar, DollarSign, MapPin, Lightbulb, User, Dumbbell, Heart, Clock, MapPinned } from 'lucide-react';
+import { MessageCircle, Award, Calendar, DollarSign, MapPin, Lightbulb, User, Dumbbell, Heart, Clock, MapPinned } from 'lucide-react';
 import IntroCallModal from '../components/IntroCallModal';
 import Toast from '../components/Toast';
 import type { IntroCallData } from '../components/IntroCallModal';
@@ -110,10 +110,6 @@ export default function Dashboard() {
                 <span className="flex items-center gap-1">
                   <Award className="w-4 h-4" />
                   {trainer.years_of_experience} years experience
-                </span>
-                <span className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                  {trainer.client_ratings}/5 rating
                 </span>
               </div>
             </div>
