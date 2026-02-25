@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Star, MapPin, Calendar, DollarSign, Award, Loader2 } from 'lucide-react';
+import { MapPin, Calendar, DollarSign, Award, Loader2 } from 'lucide-react';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
 
@@ -80,10 +80,6 @@ export default function Matches() {
                       <span className="flex items-center gap-1">
                         <Award className="w-4 h-4" />
                         {expert.years_of_experience} years
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        {expert.client_ratings}/5
                       </span>
                     </div>
                   </div>
