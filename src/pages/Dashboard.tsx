@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
-import { MessageCircle, Award, Calendar, DollarSign, MapPin, Lightbulb, User, Dumbbell, Heart, Clock, MapPinned } from 'lucide-react';
+import { MessageCircle, Award, Calendar, DollarSign, MapPin, Lightbulb, User, Dumbbell, Heart, Clock, MapPinned, Building2 } from 'lucide-react';
+import { BenefitLogosRow } from '../components/BenefitLogos';
 import IntroCallModal from '../components/IntroCallModal';
 import Toast from '../components/Toast';
 import type { IntroCallData } from '../components/IntroCallModal';
@@ -115,7 +116,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 mb-6 text-sm">
+          <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
             <div className="flex items-center gap-2 text-neutral-700">
               <DollarSign className="w-4 h-4" />
               <span>{trainer.monthly_budget}</span>
@@ -129,6 +130,36 @@ export default function Dashboard() {
               <span>{trainer.cooperation}</span>
             </div>
           </div>
+
+          {trainer.gym_name && (
+            <div className="mb-4">
+              {trainer.gym_maps_url ? (
+                <a
+                  href={trainer.gym_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 text-sm text-emerald-700 hover:text-emerald-800 transition-colors group"
+                >
+                  <Building2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+                  <span className="font-medium group-hover:underline">{trainer.gym_name}</span>
+                  {trainer.gym_address && (
+                    <span className="text-neutral-400 text-xs">— {trainer.gym_address}</span>
+                  )}
+                </a>
+              ) : (
+                <div className="inline-flex items-center gap-2 text-sm text-neutral-700">
+                  <Building2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+                  <span className="font-medium">{trainer.gym_name}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {trainer.accepted_benefits && trainer.accepted_benefits.length > 0 && (
+            <div className="mb-6">
+              <BenefitLogosRow benefits={trainer.accepted_benefits} size="md" />
+            </div>
+          )}
 
           <div className="flex gap-3">
             <button

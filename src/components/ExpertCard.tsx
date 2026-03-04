@@ -1,5 +1,6 @@
-import { Award, DollarSign, Calendar, MapPin, Loader2, ChevronDown } from 'lucide-react';
+import { Award, DollarSign, Calendar, MapPin, Loader2, ChevronDown, Building2 } from 'lucide-react';
 import type { ExpertWithMatchStatus } from '../data/expertsData';
+import { BenefitLogosRow } from './BenefitLogos';
 
 interface ExpertCardProps {
   expert: ExpertWithMatchStatus;
@@ -87,6 +88,36 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
           <span className="truncate">{expert.cooperation}</span>
         </div>
       </div>
+
+      {expert.gym_name && (
+        <div className="mb-3">
+          {expert.gym_maps_url ? (
+            <a
+              href={expert.gym_maps_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 text-sm text-emerald-700 hover:text-emerald-800 transition-colors group rounded-lg bg-neutral-50 px-3 py-2"
+            >
+              <Building2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+              <span className="font-medium group-hover:underline truncate">{expert.gym_name}</span>
+              {expert.gym_address && (
+                <span className="text-neutral-400 text-xs truncate hidden sm:inline">— {expert.gym_address}</span>
+              )}
+            </a>
+          ) : (
+            <div className="flex items-center gap-2 text-sm text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
+              <Building2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
+              <span className="font-medium truncate">{expert.gym_name}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {expert.accepted_benefits && expert.accepted_benefits.length > 0 && (
+        <div className="mb-4">
+          <BenefitLogosRow benefits={expert.accepted_benefits} size="sm" />
+        </div>
+      )}
 
       {showExpandableSection && (
         <details className="group mb-4">
