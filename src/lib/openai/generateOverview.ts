@@ -1,4 +1,3 @@
-import { openai } from './client';
 import { ErrorFactory } from '../errors/errorFactory';
 
 export interface ClientIntakeData {
@@ -10,47 +9,36 @@ export interface ClientIntakeData {
   weight_goal: string;
 }
 
+const EDGE_FUNCTION_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-overview`;
+
 export async function generateClientOverview(
   clientData: ClientIntakeData
 ): Promise<string> {
   try {
-    const prompt = `Create a concise professional overview (2-3 sentences) for a fitness client based on their intake information:
-
-Training Experience: ${clientData.training_experience}
-Goals: ${clientData.goals.join(', ')}
-Sessions per Week: ${clientData.sessions_per_week}
-Chronic Diseases: ${clientData.chronic_diseases.length > 0 ? clientData.chronic_diseases.join(', ') : 'None'}
-Injuries: ${clientData.injuries.length > 0 ? clientData.injuries.join(', ') : 'None'}
-Weight Goal: ${clientData.weight_goal}
-
-Write a brief, professional summary that captures their fitness profile, goals, and any relevant health considerations.`;
-
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a fitness professional creating client profile overviews. Be concise, professional, and focus on key information.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 200,
+    const response = await fetch(EDGE_FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(clientData),
     });
 
-    const overview = completion.choices[0]?.message?.content?.trim();
-
-    if (!overview) {
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({ error: 'Request failed' }));
       throw ErrorFactory.createOpenAIError(
-        'No overview generated',
-        'EMPTY_RESPONSE'
+        err.error || 'Failed to generate overview',
+        err.code || 'REQUEST_FAILED'
       );
     }
 
-    return overview;
+    const data = await response.json();
+
+    if (!data.overview) {
+      throw ErrorFactory.createOpenAIError('No overview generated', 'EMPTY_RESPONSE');
+    }
+
+    return data.overview;
   } catch (error: any) {
     console.error('Error generating overview:', error);
     throw ErrorFactory.fromError(error);
@@ -60,43 +48,6 @@ Write a brief, professional summary that captures their fitness profile, goals, 
 export async function* streamClientOverview(
   clientData: ClientIntakeData
 ): AsyncGenerator<string, void, unknown> {
-  try {
-    const prompt = `Create a concise professional overview (2-3 sentences) for a fitness client based on their intake information:
-
-Training Experience: ${clientData.training_experience}
-Goals: ${clientData.goals.join(', ')}
-Sessions per Week: ${clientData.sessions_per_week}
-Chronic Diseases: ${clientData.chronic_diseases.length > 0 ? clientData.chronic_diseases.join(', ') : 'None'}
-Injuries: ${clientData.injuries.length > 0 ? clientData.injuries.join(', ') : 'None'}
-Weight Goal: ${clientData.weight_goal}
-
-Write a brief, professional summary that captures their fitness profile, goals, and any relevant health considerations.`;
-
-    const stream = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a fitness professional creating client profile overviews. Be concise, professional, and focus on key information.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.7,
-      max_tokens: 200,
-      stream: true,
-    });
-
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content;
-      if (content) {
-        yield content;
-      }
-    }
-  } catch (error: any) {
-    console.error('Error streaming overview:', error);
-    throw ErrorFactory.fromError(error);
-  }
+  const overview = await generateClientOverview(clientData);
+  yield overview;
 }
