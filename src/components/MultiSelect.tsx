@@ -7,6 +7,11 @@ interface MultiSelectProps {
   onChange: (value: string[]) => void;
   placeholder?: string;
   allowOther?: boolean;
+  labelMap?: Record<string, string>;
+  searchPlaceholder?: string;
+  addPlaceholder?: string;
+  addLabel?: string;
+  selectedLabel?: (count: number) => string;
 }
 
 export default function MultiSelect({
@@ -15,12 +20,20 @@ export default function MultiSelect({
   onChange,
   placeholder = 'Select options',
   allowOther = false,
+  labelMap,
+  searchPlaceholder = 'Szukaj...',
+  addPlaceholder = 'Dodaj inne...',
+  addLabel = 'Dodaj',
+  selectedLabel = (count) => `Wybrano: ${count}`,
 }: MultiSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const [otherValue, setOtherValue] = useState('');
 
+  const getLabel = (option: string) => labelMap?.[option] ?? option;
+
   const filteredOptions = options.filter((option) =>
+    getLabel(option).toLowerCase().includes(search.toLowerCase()) ||
     option.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -55,7 +68,7 @@ export default function MultiSelect({
               key={item}
               className="bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-sm flex items-center gap-1"
             >
-              {item}
+              {getLabel(item)}
               <X
                 className="w-4 h-4 cursor-pointer"
                 onClick={(e) => {
@@ -68,7 +81,7 @@ export default function MultiSelect({
         </div>
         <div className="flex justify-between items-center">
           <span className={value.length === 0 ? 'text-neutral-400' : 'text-neutral-900'}>
-            {value.length === 0 ? placeholder : `${value.length} selected`}
+            {value.length === 0 ? placeholder : selectedLabel(value.length)}
           </span>
           <ChevronDown className="w-5 h-5 text-neutral-500" />
         </div>
@@ -78,7 +91,7 @@ export default function MultiSelect({
         <div className="absolute z-10 w-full mt-2 bg-white border border-neutral-300 rounded-lg shadow-lg max-h-64 overflow-y-auto">
           <input
             type="text"
-            placeholder="Search..."
+            placeholder={searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full p-3 border-b border-neutral-200 focus:outline-none"
@@ -99,7 +112,7 @@ export default function MultiSelect({
                 onChange={() => {}}
                 className="w-4 h-4"
               />
-              <span className="text-sm">{option}</span>
+              <span className="text-sm">{getLabel(option)}</span>
             </div>
           ))}
           {allowOther && (
@@ -107,7 +120,7 @@ export default function MultiSelect({
               <div className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Add other..."
+                  placeholder={addPlaceholder}
                   value={otherValue}
                   onChange={(e) => setOtherValue(e.target.value)}
                   onKeyDown={(e) => {
@@ -126,7 +139,7 @@ export default function MultiSelect({
                   }}
                   className="px-4 py-2 bg-emerald-600 text-white rounded hover:bg-emerald-700"
                 >
-                  Add
+                  {addLabel}
                 </button>
               </div>
             </div>

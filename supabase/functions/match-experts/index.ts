@@ -23,21 +23,21 @@ async function calculateMatchScore(
   clientOverview: string,
   expert: Expert
 ): Promise<MatchResult> {
-  const prompt = `You are a fitness matchmaking expert. Analyze the compatibility between a client and a fitness expert.
+  const prompt = `Jesteś ekspertem od dopasowywania w fitness. Przeanalizuj kompatybilność klienta i trenera fitness.
 
-Client Profile:
+Profil klienta:
 ${clientOverview}
 
-Expert Profile:
+Profil trenera:
 ${expert.overview}
 
-Rate their compatibility on a scale of 0-100 and provide exactly two brief reasons (one sentence each) why they would be a good match.
+Oceń ich kompatybilność w skali 0-100 i podaj dokładnie dwa krótkie powody (jedno zdanie każdy) po polsku, dlaczego byliby dobrym dopasowaniem.
 
-Return your response in this exact JSON format:
+Zwróć odpowiedź w dokładnie tym formacie JSON:
 {
-  "match_score": <number between 0-100>,
-  "reason1": "<first reason>",
-  "reason2": "<second reason>"
+  "match_score": <liczba między 0-100>,
+  "reason1": "<pierwszy powód po polsku>",
+  "reason2": "<drugi powód po polsku>"
 }`;
 
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -51,7 +51,7 @@ Return your response in this exact JSON format:
       messages: [
         {
           role: "system",
-          content: "You are a fitness matchmaking expert. Respond only with valid JSON.",
+          content: "Jesteś ekspertem od dopasowywania w fitness. Odpowiadaj wyłącznie poprawnym JSON. Wszystkie pola tekstowe pisz po polsku.",
         },
         {
           role: "user",
@@ -116,7 +116,7 @@ Deno.serve(async (req: Request) => {
           results.push({
             expert_id: expert.id,
             match_score: 0,
-            reason1: "Error calculating match score",
+            reason1: "Błąd podczas obliczania wyniku dopasowania",
             reason2: "",
           });
         }
@@ -150,7 +150,7 @@ Deno.serve(async (req: Request) => {
                   return {
                     expert_id: expert.id,
                     match_score: 0,
-                    reason1: "Error calculating match score",
+                    reason1: "Błąd podczas obliczania wyniku dopasowania",
                     reason2: "",
                   };
                 }

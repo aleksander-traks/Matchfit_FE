@@ -188,8 +188,8 @@ export function useRealTimeMatching() {
         } catch (error) {
           console.error(`Failed to calculate reasons for expert ${expert.id}:`, error);
           updateExpertStatus(expert.id, {
-            reason1: 'This trainer matches your fitness goals and experience level.',
-            reason2: 'They have the qualifications to help you achieve your objectives.',
+            reason1: 'Ten trener pasuje do Twoich celów fitness i poziomu doświadczenia.',
+            reason2: 'Posiada kwalifikacje, które pomogą Ci osiągnąć Twoje cele.',
             matchStatus: 'complete',
             reasonsLoading: false,
           });

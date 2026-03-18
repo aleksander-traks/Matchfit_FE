@@ -165,7 +165,7 @@ export default function IntakeStep2() {
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
-                  {coop}
+                  {pl.referenceData.cooperation[coop] ?? coop}
                 </button>
               ))}
             </div>

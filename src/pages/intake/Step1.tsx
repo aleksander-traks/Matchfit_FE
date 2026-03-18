@@ -72,7 +72,7 @@ export default function IntakeStep1() {
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
-                  {goal}
+                  {pl.referenceData.goals[goal] ?? goal}
                 </button>
               ))}
             </div>
@@ -93,7 +93,7 @@ export default function IntakeStep1() {
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
-                  {exp}
+                  {pl.referenceData.experience[exp] ?? exp}
                 </button>
               ))}
             </div>
@@ -130,6 +130,7 @@ export default function IntakeStep1() {
               onChange={setChronicDiseases}
               placeholder={pl.intake.step1.chronicPlaceholder}
               allowOther
+              labelMap={pl.referenceData.chronicDiseases}
             />
           </div>
 
@@ -143,6 +144,7 @@ export default function IntakeStep1() {
               onChange={setInjuries}
               placeholder={pl.intake.step1.injuriesPlaceholder}
               allowOther
+              labelMap={pl.referenceData.injuries}
             />
           </div>
 
@@ -161,7 +163,7 @@ export default function IntakeStep1() {
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
-                  {goal}
+                  {pl.referenceData.weightGoal[goal] ?? goal}
                 </button>
               ))}
             </div>

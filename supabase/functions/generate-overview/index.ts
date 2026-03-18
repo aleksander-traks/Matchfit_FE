@@ -31,16 +31,16 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    const prompt = `Create a concise professional overview (2-3 sentences) for a fitness client based on their intake information:
+    const prompt = `Napisz zwięzły, profesjonalny opis (2-3 zdania) klienta fitness na podstawie jego danych:
 
-Training Experience: ${clientData.training_experience}
-Goals: ${clientData.goals.join(", ")}
-Sessions per Week: ${clientData.sessions_per_week}
-Chronic Diseases: ${clientData.chronic_diseases.length > 0 ? clientData.chronic_diseases.join(", ") : "None"}
-Injuries: ${clientData.injuries.length > 0 ? clientData.injuries.join(", ") : "None"}
-Weight Goal: ${clientData.weight_goal}
+Doświadczenie treningowe: ${clientData.training_experience}
+Cele: ${clientData.goals.join(", ")}
+Treningi w tygodniu: ${clientData.sessions_per_week}
+Choroby przewlekłe: ${clientData.chronic_diseases.length > 0 ? clientData.chronic_diseases.join(", ") : "Brak"}
+Kontuzje: ${clientData.injuries.length > 0 ? clientData.injuries.join(", ") : "Brak"}
+Cel wagowy: ${clientData.weight_goal}
 
-Write a brief, professional summary that captures their fitness profile, goals, and any relevant health considerations.`;
+Napisz krótkie, profesjonalne podsumowanie po polsku oddające profil fitness klienta, jego cele i ważne kwestie zdrowotne.`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -53,7 +53,7 @@ Write a brief, professional summary that captures their fitness profile, goals, 
         messages: [
           {
             role: "system",
-            content: "You are a fitness professional creating client profile overviews. Be concise, professional, and focus on key information.",
+            content: "Jesteś specjalistą fitness tworzącym opisy profili klientów. Bądź zwięzły, profesjonalny i skup się na kluczowych informacjach. Zawsze odpowiadaj po polsku.",
           },
           {
             role: "user",
