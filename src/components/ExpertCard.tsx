@@ -124,7 +124,7 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
         <details className="group mb-4">
           <summary className="list-none cursor-pointer inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-800">
             {pl.expertCard.seeMoreDetails}
-            {specialties.length > 0 && <span className="text-neutral-500">({specialties.length} specializations)</span>}
+            {specialties.length > 0 && <span className="text-neutral-500">({pl.expertCard.specializationsCount(specialties.length)})</span>}
             <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180" />
           </summary>
 
@@ -138,7 +138,7 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
                     key={`${specialty}-detail`}
                     className="px-2.5 py-1 text-xs font-medium rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100"
                   >
-                    {specialty}
+                    {pl.expertCard.specializationMap[specialty] ?? specialty}
                   </span>
                   ))}
                 </div>
@@ -148,7 +148,9 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
             {expert.availability && (
               <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2 text-sm">
                 <Calendar className="w-4 h-4 flex-shrink-0" />
-                <span className="truncate">{expert.availability}</span>
+                <span className="truncate">
+                  {expert.availability.split(',').map((d) => pl.intake.step2.days[d.trim() as keyof typeof pl.intake.step2.days] ?? d.trim()).join(', ')}
+                </span>
               </div>
             )}
 
