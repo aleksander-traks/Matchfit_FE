@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { MapPin, Calendar, DollarSign, Award, Loader2 } from 'lucide-react';
+import { pl } from '../lib/i18n/pl';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
 
@@ -49,15 +50,15 @@ export default function Matches() {
     <div className="min-h-screen bg-neutral-50 py-8">
       <div className="max-w-4xl mx-auto px-4">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Your Trainer Matches</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 mb-2">{pl.matches.title}</h1>
           <p className="text-neutral-600">
             {isLoadingMore ? (
               <span className="flex items-center gap-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Loading more matches... ({matches.length} found so far)
+                {pl.matches.loadingMore(matches.length)}
               </span>
             ) : (
-              `We found ${matches.length} trainers that match your goals and needs`
+              pl.matches.found(matches.length)
             )}
           </p>
         </div>
@@ -79,13 +80,13 @@ export default function Matches() {
                     <div className="flex items-center gap-4 text-sm text-neutral-600">
                       <span className="flex items-center gap-1">
                         <Award className="w-4 h-4" />
-                        {expert.years_of_experience} years
+                        {expert.years_of_experience} {pl.matches.years}
                       </span>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-3xl font-bold text-emerald-600">{matchPercentage}%</div>
-                    <div className="text-sm text-neutral-600">Match</div>
+                    <div className="text-sm text-neutral-600">{pl.matches.matchLabel}</div>
                   </div>
                 </div>
 
@@ -106,12 +107,12 @@ export default function Matches() {
 
                 {(match.reason_1 || match.reason_2) && (
                   <div className="bg-emerald-50 rounded-lg p-4 mb-4">
-                    <h4 className="font-semibold text-neutral-900 mb-2">Why this trainer?</h4>
+                    <h4 className="font-semibold text-neutral-900 mb-2">{pl.matches.whyThisTrainer}</h4>
                     <ul className="space-y-1 text-sm text-neutral-700">
                       {match.reason_1 && <li>• {match.reason_1}</li>}
                       {match.reason_2 && <li>• {match.reason_2}</li>}
                       {!match.reason_1 && !match.reason_2 && (
-                        <li>• This trainer matches your goals and experience level</li>
+                        <li>• {pl.matches.defaultReason}</li>
                       )}
                     </ul>
                   </div>
@@ -122,10 +123,10 @@ export default function Matches() {
                     onClick={() => handleChooseTrainer(expert.id)}
                     className="flex-1 bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors"
                   >
-                    Choose this trainer
+                    {pl.matches.chooseTrainer}
                   </button>
                   <button className="px-6 py-3 border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 transition-colors">
-                    Message
+                    {pl.matches.message}
                   </button>
                 </div>
               </div>

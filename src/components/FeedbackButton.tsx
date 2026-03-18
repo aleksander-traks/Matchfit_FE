@@ -3,6 +3,7 @@ import { MessageSquare, Star, X, Send, Check } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { api } from '../lib/api';
 import { storage } from '../lib/storage';
+import { pl } from '../lib/i18n/pl';
 
 type PanelState = 'closed' | 'open' | 'submitted';
 
@@ -29,7 +30,7 @@ export default function FeedbackButton() {
 
   const handleSubmit = async () => {
     if (rating === 0) {
-      setError('Please select a rating before submitting.');
+      setError(pl.feedback.ratingRequired);
       return;
     }
 
@@ -46,7 +47,7 @@ export default function FeedbackButton() {
       setPanel('submitted');
       setTimeout(() => setPanel('closed'), 2500);
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError(pl.feedback.error);
     } finally {
       setSubmitting(false);
     }
@@ -64,13 +65,13 @@ export default function FeedbackButton() {
               <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center">
                 <Check className="w-6 h-6 text-emerald-600" />
               </div>
-              <p className="font-semibold text-gray-800">Thank you for your feedback!</p>
-              <p className="text-sm text-gray-500">It helps us improve the experience.</p>
+              <p className="font-semibold text-gray-800">{pl.feedback.thankYou}</p>
+              <p className="text-sm text-gray-500">{pl.feedback.thankYouSub}</p>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
-                <span className="font-semibold text-gray-800 text-sm">Share your feedback</span>
+                <span className="font-semibold text-gray-800 text-sm">{pl.feedback.panelTitle}</span>
                 <button
                   onClick={close}
                   className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-200 transition-colors"
@@ -82,7 +83,7 @@ export default function FeedbackButton() {
               <div className="p-4 space-y-4">
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    How would you rate your experience?
+                    {pl.feedback.ratingQuestion}
                   </p>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
@@ -107,12 +108,12 @@ export default function FeedbackButton() {
 
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-                    Any comments? (optional)
+                    {pl.feedback.commentsLabel}
                   </p>
                   <textarea
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Tell us what you think..."
+                    placeholder={pl.feedback.commentsPlaceholder}
                     rows={3}
                     className="w-full text-sm text-gray-700 placeholder-gray-400 border border-gray-200 rounded-xl px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition"
                   />
@@ -132,7 +133,7 @@ export default function FeedbackButton() {
                   ) : (
                     <Send className="w-4 h-4" />
                   )}
-                  {submitting ? 'Sending...' : 'Submit Feedback'}
+                  {submitting ? pl.feedback.sending : pl.feedback.submit}
                 </button>
               </div>
             </>
@@ -149,7 +150,7 @@ export default function FeedbackButton() {
         }`}
       >
         <MessageSquare className="w-4 h-4" />
-        Feedback
+        {pl.feedback.buttonLabel}
       </button>
 
       <style>{`

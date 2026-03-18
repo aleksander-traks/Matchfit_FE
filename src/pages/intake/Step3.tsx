@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIntake } from '../../context/IntakeContext';
+import { pl } from '../../lib/i18n/pl';
 import ProgressIndicator from '../../components/ProgressIndicator';
 import { api } from '../../lib/api';
 import { storage } from '../../lib/storage';
@@ -85,15 +86,13 @@ export default function IntakeStep3() {
           <div className="bg-white rounded-lg shadow-sm p-12 text-center">
             <Loader2 className="w-12 h-12 text-emerald-600 animate-spin mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-              Generating your personalized overview
+              {pl.intake.step3.generatingTitle}
             </h3>
             <p className="text-neutral-600 mb-4">
-              This may take up to 90 seconds. We're analyzing your fitness profile to create
-              the best possible match with our trainers.
+              {pl.intake.step3.generatingDesc}
             </p>
             <p className="text-sm text-neutral-500">
-              If this is the first request in a while, the AI service may be starting up.
-              Thank you for your patience.
+              {pl.intake.step3.generatingNote}
             </p>
           </div>
         </div>
@@ -108,9 +107,9 @@ export default function IntakeStep3() {
 
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
           <div>
-            <h2 className="text-xl font-bold text-neutral-900 mb-2">Your Overview</h2>
+            <h2 className="text-xl font-bold text-neutral-900 mb-2">{pl.intake.step3.overviewTitle}</h2>
             <p className="text-sm text-neutral-600 mb-4">
-              Review and edit your fitness overview. This will be used to match you with the best trainer.
+              {pl.intake.step3.overviewDesc}
             </p>
 
             {intakeData.overviewError && (
@@ -129,12 +128,12 @@ export default function IntakeStep3() {
               onChange={(e) => setOverview(e.target.value)}
               rows={8}
               className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
-              placeholder="Describe your fitness goals, experience, and needs..."
+              placeholder={pl.intake.step3.overviewPlaceholder}
             />
 
             {!overview && !intakeData.overviewError && (
               <p className="text-sm text-neutral-500 mt-2">
-                Please describe your fitness goals and situation to help us match you with the right trainer.
+                {pl.intake.step3.overviewHint}
               </p>
             )}
           </div>
@@ -151,7 +150,7 @@ export default function IntakeStep3() {
               disabled={isMatching}
               className="flex-1 bg-neutral-200 text-neutral-700 py-3 rounded-lg font-semibold hover:bg-neutral-300 transition-colors disabled:opacity-50"
             >
-              Back
+              {pl.intake.step3.back}
             </button>
             <button
               onClick={handleConfirm}
@@ -161,10 +160,10 @@ export default function IntakeStep3() {
               {isMatching ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Saving profile...
+                  {pl.intake.step3.saving}
                 </>
               ) : (
-                'Start Matching'
+                pl.intake.step3.startMatching
               )}
             </button>
           </div>

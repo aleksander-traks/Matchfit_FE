@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIntake } from '../../context/IntakeContext';
+import { pl } from '../../lib/i18n/pl';
 import ProgressIndicator from '../../components/ProgressIndicator';
 import MultiSelect from '../../components/MultiSelect';
 import {
@@ -52,7 +53,7 @@ export default function IntakeStep1() {
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              What are your fitness goals?
+                {pl.intake.step1.goalsLabel}
             </label>
             <div className="flex flex-wrap gap-2">
               {GOALS_OPTIONS.map((goal) => (
@@ -79,7 +80,7 @@ export default function IntakeStep1() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              What is your training experience?
+                {pl.intake.step1.experienceLabel}
             </label>
             <div className="flex flex-wrap gap-2">
               {TRAINING_EXPERIENCE_OPTIONS.map((exp) => (
@@ -100,7 +101,7 @@ export default function IntakeStep1() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              How many times per week can you work out?
+                {pl.intake.step1.sessionsLabel}
             </label>
             <div className="flex flex-wrap gap-2">
               {SESSIONS_PER_WEEK_OPTIONS.map((num) => (
@@ -121,33 +122,33 @@ export default function IntakeStep1() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Do you have any chronic diseases or conditions?
+                {pl.intake.step1.chronicLabel}
             </label>
             <MultiSelect
               options={CHRONIC_DISEASES_OPTIONS}
               value={chronicDiseases}
               onChange={setChronicDiseases}
-              placeholder="Select chronic diseases"
+              placeholder={pl.intake.step1.chronicPlaceholder}
               allowOther
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Do you have any current injuries?
+                {pl.intake.step1.injuriesLabel}
             </label>
             <MultiSelect
               options={INJURIES_OPTIONS}
               value={injuries}
               onChange={setInjuries}
-              placeholder="Select injuries"
+              placeholder={pl.intake.step1.injuriesPlaceholder}
               allowOther
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              What is your weight goal?
+                {pl.intake.step1.weightGoalLabel}
             </label>
             <div className="flex flex-wrap gap-2">
               {WEIGHT_GOAL_OPTIONS.map((goal) => (
@@ -171,7 +172,7 @@ export default function IntakeStep1() {
             disabled={!isValid}
             className="w-full bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed"
           >
-            Continue
+            {pl.intake.step1.continue}
           </button>
         </div>
       </div>

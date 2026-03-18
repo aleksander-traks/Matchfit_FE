@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertCircle, AlertTriangle, Info, XCircle, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import type { AppError } from '../../lib/errors/AppError';
 import { getErrorMessage } from '../../lib/errors/errorMessages';
+import { pl } from '../../lib/i18n/pl';
 
 interface ErrorAlertProps {
   error: AppError;
@@ -79,7 +80,7 @@ export default function ErrorAlert({ error, onRetry, onDismiss, showTechnicalDet
 
           {error.recoverySuggestions.length > 0 && (
             <div className="mb-3">
-              <p className={`text-xs font-medium ${styles.text} mb-2`}>What you can do:</p>
+              <p className={`text-xs font-medium ${styles.text} mb-2`}>{pl.errorAlert.whatYouCanDo}</p>
               <ul className={`text-xs ${styles.text} space-y-1 list-disc list-inside`}>
                 {error.recoverySuggestions.map((suggestion, index) => (
                   <li key={index}>
@@ -100,7 +101,7 @@ export default function ErrorAlert({ error, onRetry, onDismiss, showTechnicalDet
                     : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-900'
                 }`}
               >
-                Try Again
+                {pl.errorAlert.tryAgain}
               </button>
             )}
 
@@ -109,7 +110,7 @@ export default function ErrorAlert({ error, onRetry, onDismiss, showTechnicalDet
                 onClick={onDismiss}
                 className="px-3 py-1.5 text-xs font-medium text-neutral-600 hover:text-neutral-900 transition-colors"
               >
-                Dismiss
+                {pl.errorAlert.dismiss}
               </button>
             )}
 
@@ -121,12 +122,12 @@ export default function ErrorAlert({ error, onRetry, onDismiss, showTechnicalDet
               {copied ? (
                 <>
                   <Check className="w-3 h-3" />
-                  <span>Copied!</span>
+                  <span>{pl.errorAlert.copied}</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3 h-3" />
-                  <span>Copy Error ID</span>
+                  <span>{pl.errorAlert.copyErrorId}</span>
                 </>
               )}
             </button>
@@ -139,35 +140,35 @@ export default function ErrorAlert({ error, onRetry, onDismiss, showTechnicalDet
                 className={`flex items-center gap-2 text-xs font-medium ${styles.text} hover:underline`}
               >
                 {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                Technical Details
+                {pl.errorAlert.technicalDetails}
               </button>
 
               {isExpanded && (
                 <div className={`mt-2 p-3 bg-white rounded border ${styles.border}`}>
                   <dl className="space-y-2 text-xs">
                     <div>
-                      <dt className="font-medium text-neutral-700">Error ID:</dt>
+                      <dt className="font-medium text-neutral-700">{pl.errorAlert.errorId}</dt>
                       <dd className="font-mono text-neutral-600">{error.errorId}</dd>
                     </div>
                     <div>
-                      <dt className="font-medium text-neutral-700">Error Code:</dt>
+                      <dt className="font-medium text-neutral-700">{pl.errorAlert.errorCode}</dt>
                       <dd className="font-mono text-neutral-600">{error.code}</dd>
                     </div>
                     <div>
-                      <dt className="font-medium text-neutral-700">Message:</dt>
+                      <dt className="font-medium text-neutral-700">{pl.errorAlert.messageLabel}</dt>
                       <dd className="text-neutral-600">{error.technicalMessage}</dd>
                     </div>
                     <div>
-                      <dt className="font-medium text-neutral-700">Source:</dt>
+                      <dt className="font-medium text-neutral-700">{pl.errorAlert.source}</dt>
                       <dd className="text-neutral-600">{error.source}</dd>
                     </div>
                     <div>
-                      <dt className="font-medium text-neutral-700">Timestamp:</dt>
+                      <dt className="font-medium text-neutral-700">{pl.errorAlert.timestamp}</dt>
                       <dd className="text-neutral-600">{error.timestamp.toLocaleString()}</dd>
                     </div>
                     {errorMessage.technicalNote && (
                       <div>
-                        <dt className="font-medium text-neutral-700">Note:</dt>
+                        <dt className="font-medium text-neutral-700">{pl.errorAlert.note}</dt>
                         <dd className="text-neutral-600">{errorMessage.technicalNote}</dd>
                       </div>
                     )}

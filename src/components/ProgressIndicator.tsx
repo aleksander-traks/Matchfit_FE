@@ -1,3 +1,5 @@
+import { pl } from '../lib/i18n/pl';
+
 interface ProgressIndicatorProps {
   currentStep: number;
   totalSteps: number;
@@ -29,7 +31,7 @@ export default function ProgressIndicator({ currentStep, totalSteps }: ProgressI
         ))}
       </div>
       <p className="text-center text-neutral-600 mt-3">
-        Step {currentStep} of {totalSteps}
+        {pl.progressIndicator.step(currentStep, totalSteps)}
       </p>
     </div>
   );

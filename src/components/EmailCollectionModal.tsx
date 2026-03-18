@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Mail, Loader2 } from 'lucide-react';
 import { validateEmailFormat, normalizeEmail } from '../lib/utils/emailValidation';
+import { pl } from '../lib/i18n/pl';
 
 export interface EmailCollectionModalProps {
   isOpen: boolean;
@@ -14,8 +15,8 @@ export default function EmailCollectionModal({
   isOpen,
   onClose,
   onSubmit,
-  title = 'Stay Connected',
-  message = "We'll notify you when your trainer responds. Your email will only be used for important updates.",
+  title = pl.emailModal.defaultTitle,
+  message = pl.emailModal.defaultMessage,
 }: EmailCollectionModalProps) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
@@ -42,12 +43,12 @@ export default function EmailCollectionModal({
 
     const validation = validateEmailFormat(email);
     if (!validation.valid) {
-      setError(validation.error || 'Invalid email');
+      setError(validation.error || pl.emailModal.invalidEmail);
       return;
     }
 
     if (!consent) {
-      setError('Please accept the notification consent');
+      setError(pl.emailModal.consentRequired);
       return;
     }
 
@@ -59,7 +60,7 @@ export default function EmailCollectionModal({
       await onSubmit(normalizedEmail);
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to save email. Please try again.');
+      setError(err.message || pl.emailModal.saveError);
     } finally {
       setIsSubmitting(false);
     }
@@ -101,14 +102,14 @@ export default function EmailCollectionModal({
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
-              Email Address
+              {pl.emailModal.emailLabel}
             </label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={handleEmailChange}
-              placeholder="your.email@example.com"
+              placeholder={pl.emailModal.emailPlaceholder}
               className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
                 error
                   ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
@@ -135,7 +136,7 @@ export default function EmailCollectionModal({
                 disabled={isSubmitting}
               />
               <span className="text-sm text-neutral-600">
-                I agree to receive notifications about my training sessions and messages
+                {pl.emailModal.consentText}
               </span>
             </label>
           </div>
@@ -147,7 +148,7 @@ export default function EmailCollectionModal({
               disabled={isSubmitting}
               className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Cancel
+              {pl.emailModal.cancel}
             </button>
             <button
               type="submit"
@@ -157,10 +158,10 @@ export default function EmailCollectionModal({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
-                  Saving...
+                  {pl.emailModal.saving}
                 </>
               ) : (
-                'Continue'
+                pl.emailModal.continue
               )}
             </button>
           </div>

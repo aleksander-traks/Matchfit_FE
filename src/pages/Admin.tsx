@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
+import { pl } from '../lib/i18n/pl';
 import {
   Users,
   Search,
@@ -181,7 +182,7 @@ export default function Admin() {
   };
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    new Date(iso).toLocaleDateString('pl-PL', { day: '2-digit', month: 'short', year: 'numeric' });
 
   const shortId = (id: string) => id.slice(0, 8).toUpperCase();
 
@@ -197,16 +198,16 @@ export default function Admin() {
                 <Activity className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h1 className="text-base font-semibold text-neutral-900">Admin Panel</h1>
-                <p className="text-xs text-neutral-500">Management Dashboard</p>
+                <h1 className="text-base font-semibold text-neutral-900">{pl.admin.title}</h1>
+                <p className="text-xs text-neutral-500">{pl.admin.subtitle}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-full font-medium">
-                {profiles.length} users
+                {profiles.length} {pl.admin.usersLabel}
               </span>
               <span className="text-xs text-neutral-500 bg-neutral-100 px-2.5 py-1 rounded-full font-medium">
-                {experts.length} trainers
+                {experts.length} {pl.admin.trainersLabel}
               </span>
             </div>
           </div>
@@ -221,7 +222,7 @@ export default function Admin() {
               }`}
             >
               <Users className="w-4 h-4" />
-              Users
+              {pl.admin.users}
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${tab === 'users' ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-500'}`}>
                 {profiles.length}
               </span>
@@ -235,7 +236,7 @@ export default function Admin() {
               }`}
             >
               <Dumbbell className="w-4 h-4" />
-              Trainers
+              {pl.admin.trainers}
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${tab === 'trainers' ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-500'}`}>
                 {experts.length}
               </span>
@@ -249,7 +250,7 @@ export default function Admin() {
           <div className="flex items-center justify-center py-24">
             <div className="text-center">
               <div className="w-10 h-10 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-neutral-500 text-sm">Loading {tab}...</p>
+              <p className="text-neutral-500 text-sm">{pl.admin.loadingTab(tab === 'users' ? pl.admin.usersLabel : pl.admin.trainersLabel)}</p>
             </div>
           </div>
         ) : tab === 'users' ? (
@@ -259,7 +260,7 @@ export default function Admin() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                 <input
                   type="text"
-                  placeholder="Search by ID, email, location, goals..."
+                  placeholder={pl.admin.searchUsers}
                   value={profileSearch}
                   onChange={(e) => setProfileSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 text-sm border border-neutral-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-neutral-400"
@@ -270,17 +271,17 @@ export default function Admin() {
                 onChange={(e) => setFilterTrainer(e.target.value as 'all' | 'yes' | 'no')}
                 className="text-sm border border-neutral-200 rounded-lg px-3 py-2.5 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 text-neutral-700"
               >
-                <option value="all">All users</option>
-                <option value="yes">Has trainer</option>
-                <option value="no">No trainer</option>
+                <option value="all">{pl.admin.allUsers}</option>
+                <option value="yes">{pl.admin.hasTrainer}</option>
+                <option value="no">{pl.admin.noTrainer}</option>
               </select>
             </div>
 
             {filteredProfiles.length === 0 ? (
               <div className="bg-white rounded-xl border border-neutral-200 p-16 text-center">
                 <User className="w-10 h-10 text-neutral-300 mx-auto mb-3" />
-                <p className="text-neutral-500 font-medium">No users found</p>
-                <p className="text-neutral-400 text-sm mt-1">Try adjusting your search or filters</p>
+                <p className="text-neutral-500 font-medium">{pl.admin.noUsersFound}</p>
+                <p className="text-neutral-400 text-sm mt-1">{pl.admin.noUsersHint}</p>
               </div>
             ) : (
               <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
@@ -288,13 +289,13 @@ export default function Admin() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-neutral-100 bg-neutral-50">
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide">User</th>
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide">Location</th>
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide">Goals</th>
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden lg:table-cell">Budget</th>
-                        <SortHeader label="Matches" field="match_count" current={profileSortField} dir={profileSortDir} onToggle={toggleProfileSort} className="hidden md:table-cell" />
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden sm:table-cell">Trainer</th>
-                        <SortHeader label="Joined" field="created_at" current={profileSortField} dir={profileSortDir} onToggle={toggleProfileSort} />
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide">{pl.admin.colUser}</th>
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide">{pl.admin.colLocation}</th>
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide">{pl.admin.colGoals}</th>
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden lg:table-cell">{pl.admin.colBudget}</th>
+                        <SortHeader label={pl.admin.colMatches} field="match_count" current={profileSortField} dir={profileSortDir} onToggle={toggleProfileSort} className="hidden md:table-cell" />
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden sm:table-cell">{pl.admin.colTrainer}</th>
+                        <SortHeader label={pl.admin.colJoined} field="created_at" current={profileSortField} dir={profileSortDir} onToggle={toggleProfileSort} />
                         <th className="px-5 py-3" />
                       </tr>
                     </thead>
@@ -315,7 +316,7 @@ export default function Admin() {
                                 {profile.email ? (
                                   <p className="text-xs text-neutral-400 mt-0.5 max-w-[140px] truncate">{profile.email}</p>
                                 ) : (
-                                  <p className="text-xs text-neutral-300 mt-0.5">No email</p>
+                                  <p className="text-xs text-neutral-300 mt-0.5">{pl.admin.noEmail}</p>
                                 )}
                                 <div className="flex items-center gap-1.5 mt-0.5">
                                   {profile.age && <span className="text-xs text-neutral-500">{profile.age}y</span>}
@@ -361,17 +362,17 @@ export default function Admin() {
                           <td className="px-5 py-4 hidden md:table-cell">
                             <span className="inline-flex items-center gap-1 text-xs font-medium text-neutral-600">
                               <span className="w-5 h-5 rounded bg-neutral-100 flex items-center justify-center text-xs font-semibold text-neutral-500">{profile.match_count}</span>
-                              {profile.match_count === 1 ? 'match' : 'matches'}
+                              {profile.match_count === 1 ? pl.admin.match : pl.admin.matches}
                             </span>
                           </td>
                           <td className="px-5 py-4 hidden sm:table-cell">
                             {profile.selected_expert_id !== null ? (
                               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-1 rounded-full border border-emerald-100">
-                                <CheckCircle className="w-3 h-3" />Selected
+                                <CheckCircle className="w-3 h-3" />{pl.admin.statusSelected}
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full border border-amber-100">
-                                <Clock className="w-3 h-3" />Pending
+                                <Clock className="w-3 h-3" />{pl.admin.statusPending}
                               </span>
                             )}
                           </td>
@@ -389,8 +390,8 @@ export default function Admin() {
                   </table>
                 </div>
                 <div className="px-5 py-3 border-t border-neutral-100 bg-neutral-50 flex items-center justify-between">
-                  <p className="text-xs text-neutral-400">Showing {filteredProfiles.length} of {profiles.length} users</p>
-                  <p className="text-xs text-neutral-400">{profiles.filter((p) => p.selected_expert_id !== null).length} with trainer selected</p>
+                  <p className="text-xs text-neutral-400">{pl.admin.showingOf(filteredProfiles.length, profiles.length)} {pl.admin.usersLabel}</p>
+                  <p className="text-xs text-neutral-400">{profiles.filter((p) => p.selected_expert_id !== null).length} {pl.admin.withTrainerSelected}</p>
                 </div>
               </div>
             )}
@@ -402,7 +403,7 @@ export default function Admin() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400" />
                 <input
                   type="text"
-                  placeholder="Search by name, specialization, format..."
+                  placeholder={pl.admin.searchTrainers}
                   value={expertSearch}
                   onChange={(e) => setExpertSearch(e.target.value)}
                   className="w-full pl-9 pr-4 py-2.5 text-sm border border-neutral-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent placeholder:text-neutral-400"
@@ -413,8 +414,8 @@ export default function Admin() {
             {filteredExperts.length === 0 ? (
               <div className="bg-white rounded-xl border border-neutral-200 p-16 text-center">
                 <Dumbbell className="w-10 h-10 text-neutral-300 mx-auto mb-3" />
-                <p className="text-neutral-500 font-medium">No trainers found</p>
-                <p className="text-neutral-400 text-sm mt-1">Try adjusting your search</p>
+                <p className="text-neutral-500 font-medium">{pl.admin.noTrainersFound}</p>
+                <p className="text-neutral-400 text-sm mt-1">{pl.admin.noTrainersHint}</p>
               </div>
             ) : (
               <div className="bg-white rounded-xl border border-neutral-200 overflow-hidden">
@@ -422,14 +423,14 @@ export default function Admin() {
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-neutral-100 bg-neutral-50">
-                        <SortHeader label="Trainer" field="name" current={expertSortField} dir={expertSortDir} onToggle={toggleExpertSort} />
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden lg:table-cell">Specialization</th>
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden md:table-cell">Format</th>
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden md:table-cell">Budget</th>
-                        <SortHeader label="Experience" field="years_of_experience" current={expertSortField} dir={expertSortDir} onToggle={toggleExpertSort} className="hidden sm:table-cell" />
-                        <SortHeader label="Matches" field="matched_count" current={expertSortField} dir={expertSortDir} onToggle={toggleExpertSort} />
-                        <SortHeader label="Selected" field="selected_count" current={expertSortField} dir={expertSortDir} onToggle={toggleExpertSort} />
-                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden sm:table-cell">Intro Calls</th>
+                        <SortHeader label={pl.admin.trainers} field="name" current={expertSortField} dir={expertSortDir} onToggle={toggleExpertSort} />
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden lg:table-cell">{pl.admin.colSpecialization}</th>
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden md:table-cell">{pl.admin.colFormat}</th>
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden md:table-cell">{pl.admin.colBudget}</th>
+                        <SortHeader label={pl.admin.colExperience} field="years_of_experience" current={expertSortField} dir={expertSortDir} onToggle={toggleExpertSort} className="hidden sm:table-cell" />
+                        <SortHeader label={pl.admin.colMatches} field="matched_count" current={expertSortField} dir={expertSortDir} onToggle={toggleExpertSort} />
+                        <SortHeader label={pl.admin.colSelected} field="selected_count" current={expertSortField} dir={expertSortDir} onToggle={toggleExpertSort} />
+                        <th className="text-left px-5 py-3 font-medium text-neutral-500 text-xs uppercase tracking-wide hidden sm:table-cell">{pl.admin.colIntroCalls}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-neutral-50">
@@ -454,7 +455,7 @@ export default function Admin() {
                                     </span>
                                   )}
                                   {expert.client_reviews !== null && (
-                                    <span className="text-xs text-neutral-400">{expert.client_reviews} reviews</span>
+                                    <span className="text-xs text-neutral-400">{expert.client_reviews} {pl.admin.reviews}</span>
                                   )}
                                 </div>
                               </div>
@@ -519,9 +520,9 @@ export default function Admin() {
                   </table>
                 </div>
                 <div className="px-5 py-3 border-t border-neutral-100 bg-neutral-50 flex items-center justify-between">
-                  <p className="text-xs text-neutral-400">Showing {filteredExperts.length} of {experts.length} trainers</p>
+                  <p className="text-xs text-neutral-400">{pl.admin.showingOf(filteredExperts.length, experts.length)} {pl.admin.trainersLabel}</p>
                   <p className="text-xs text-neutral-400">
-                    {experts.filter(e => e.selected_count > 0).length} trainers selected by users
+                    {experts.filter(e => e.selected_count > 0).length} {pl.admin.trainersSelectedByUsers}
                   </p>
                 </div>
               </div>

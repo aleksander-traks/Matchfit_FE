@@ -1,6 +1,7 @@
 import { Award, DollarSign, Calendar, MapPin, Loader2, ChevronDown, Building2 } from 'lucide-react';
 import type { ExpertWithMatchStatus } from '../data/expertsData';
 import { BenefitLogosRow } from './BenefitLogos';
+import { pl } from '../lib/i18n/pl';
 
 interface ExpertCardProps {
   expert: ExpertWithMatchStatus;
@@ -56,7 +57,7 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
           <div className="flex items-center gap-3 text-sm text-neutral-600">
             <span className="flex items-center gap-1">
               <Award className="w-4 h-4" />
-              {expert.years_of_experience} years
+              {expert.years_of_experience} {pl.expertCard.years}
             </span>
           </div>
         </div>
@@ -65,12 +66,12 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
           {showScoreLoader ? (
             <div className="flex flex-col items-center justify-center h-full">
               <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mb-1" />
-              <div className="text-xs text-neutral-500">Calculating...</div>
+              <div className="text-xs text-neutral-500">{pl.expertCard.calculating}</div>
             </div>
           ) : matchPercentage !== null ? (
             <div className="animate-fadeIn rounded-xl bg-emerald-50 border border-emerald-100 px-3 py-2">
               <div className="text-3xl font-bold text-emerald-600 leading-none">{matchPercentage}%</div>
-              <div className="text-sm text-neutral-600">Match</div>
+              <div className="text-sm text-neutral-600">{pl.expertCard.matchLabel}</div>
             </div>
           ) : (
             <div className="text-3xl font-bold text-neutral-300">—</div>
@@ -122,7 +123,7 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
       {showExpandableSection && (
         <details className="group mb-4">
           <summary className="list-none cursor-pointer inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700 hover:text-emerald-800">
-            See more details
+            {pl.expertCard.seeMoreDetails}
             {specialties.length > 0 && <span className="text-neutral-500">({specialties.length} specializations)</span>}
             <ChevronDown className="w-4 h-4 transition-transform duration-200 group-open:rotate-180" />
           </summary>
@@ -130,7 +131,7 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
           <div className="mt-3 space-y-3 animate-fadeIn">
             {specialties.length > 0 && (
               <div>
-                <h4 className="font-semibold text-neutral-900 mb-2">Specializations</h4>
+                <h4 className="font-semibold text-neutral-900 mb-2">{pl.expertCard.specializations}</h4>
                 <div className="flex flex-wrap gap-2">
                   {specialties.map((specialty) => (
                   <span
@@ -153,7 +154,7 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
 
             {hasReasons && matchPercentage && matchPercentage >= 60 && (
               <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-4">
-                <h4 className="font-semibold text-neutral-900 mb-2">Why this trainer?</h4>
+                <h4 className="font-semibold text-neutral-900 mb-2">{pl.expertCard.whyThisTrainer}</h4>
                 {showReasonsLoader ? (
                   <div className="space-y-2">
                     <div className="flex items-center gap-2">
@@ -183,14 +184,14 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
           disabled={!isComplete || !matchPercentage}
           className="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-semibold hover:bg-emerald-700 transition-colors shadow-sm hover:shadow-md disabled:bg-neutral-300 disabled:cursor-not-allowed"
         >
-          Choose this trainer
+          {pl.expertCard.chooseTrainer}
         </button>
         <button
           onClick={() => onMessage?.(expert.id)}
           disabled={!isComplete || !matchPercentage}
           className="px-6 py-3 border border-neutral-300 rounded-xl font-semibold hover:bg-neutral-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Message
+          {pl.expertCard.message}
         </button>
       </div>
     </div>

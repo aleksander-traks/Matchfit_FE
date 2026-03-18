@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, Mail, MessageSquare, Loader2, CheckCircle } from 'lucide-react';
 import { validateEmailFormat, normalizeEmail } from '../lib/utils/emailValidation';
+import { pl } from '../lib/i18n/pl';
 
 export interface IntroCallModalProps {
   isOpen: boolean;
@@ -59,12 +60,12 @@ export default function IntroCallModal({
   const handleNextStep = () => {
     const validation = validateEmailFormat(email);
     if (!validation.valid) {
-      setError(validation.error || 'Invalid email');
+      setError(validation.error || pl.introCallModal.invalidEmail);
       return;
     }
 
     if (!consent) {
-      setError('Please accept the notification consent');
+      setError(pl.introCallModal.consentRequired);
       return;
     }
 
@@ -115,10 +116,9 @@ export default function IntroCallModal({
           <div className="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="w-8 h-8 text-emerald-600" />
           </div>
-          <h2 className="text-2xl font-bold text-neutral-900 mb-2">All Set!</h2>
+          <h2 className="text-2xl font-bold text-neutral-900 mb-2">{pl.introCallModal.successTitle}</h2>
           <p className="text-neutral-600">
-            Your intro call request has been sent. We'll reach out to you at{' '}
-            <span className="font-semibold text-neutral-900">{email}</span> soon!
+            {pl.introCallModal.successMessage(email)}
           </p>
         </div>
       </div>
@@ -134,10 +134,10 @@ export default function IntroCallModal({
         <div className="flex items-start justify-between mb-6">
           <div>
             <h2 className="text-2xl font-bold text-neutral-900 mb-1">
-              Book Intro Call
+              {pl.introCallModal.title}
             </h2>
             <p className="text-sm text-neutral-600">
-              with {expertName}
+              {pl.introCallModal.with(expertName)}
             </p>
           </div>
           <button
@@ -171,14 +171,14 @@ export default function IntroCallModal({
             <div className="mb-4">
               <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
                 <Mail className="w-4 h-4 inline mr-1" />
-                Email Address *
+                {pl.introCallModal.emailLabel}
               </label>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={handleEmailChange}
-                placeholder="your.email@example.com"
+                placeholder={pl.emailModal.emailPlaceholder}
                 className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
                   error
                     ? 'border-red-300 focus:ring-red-500'
@@ -189,7 +189,7 @@ export default function IntroCallModal({
                 required
               />
               <p className="mt-1 text-xs text-neutral-500">
-                We'll contact you at this email to schedule your intro call
+                {pl.introCallModal.emailHint}
               </p>
             </div>
 
@@ -203,7 +203,7 @@ export default function IntroCallModal({
                   disabled={isSubmitting}
                 />
                 <span className="text-sm text-neutral-600">
-                  I agree to receive notifications about my intro call and training sessions
+                  {pl.introCallModal.consentText}
                 </span>
               </label>
             </div>
@@ -221,14 +221,14 @@ export default function IntroCallModal({
                 disabled={isSubmitting}
                 className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 transition-colors disabled:opacity-50"
               >
-                Cancel
+                {pl.introCallModal.cancel}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting || !email.trim() || !consent}
                 className="flex-1 bg-emerald-600 text-white px-4 py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed"
               >
-                Next
+                {pl.introCallModal.next}
               </button>
             </div>
           </form>
@@ -238,7 +238,7 @@ export default function IntroCallModal({
               <div>
                 <label htmlFor="preferred-date" className="block text-sm font-medium text-neutral-700 mb-2">
                   <Calendar className="w-4 h-4 inline mr-1" />
-                  Preferred Date (Optional)
+                  {pl.introCallModal.dateLabel}
                 </label>
                 <input
                   type="date"
@@ -254,14 +254,14 @@ export default function IntroCallModal({
               <div>
                 <label htmlFor="preferred-time" className="block text-sm font-medium text-neutral-700 mb-2">
                   <Clock className="w-4 h-4 inline mr-1" />
-                  Preferred Time (Optional)
+                  {pl.introCallModal.timeLabel}
                 </label>
                 <input
                   type="text"
                   id="preferred-time"
                   value={preferredTime}
                   onChange={(e) => setPreferredTime(e.target.value)}
-                  placeholder="e.g., 2:00 PM or Afternoon"
+                  placeholder={pl.introCallModal.timePlaceholder}
                   className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
                   disabled={isSubmitting}
                 />
@@ -270,13 +270,13 @@ export default function IntroCallModal({
               <div>
                 <label htmlFor="notes" className="block text-sm font-medium text-neutral-700 mb-2">
                   <MessageSquare className="w-4 h-4 inline mr-1" />
-                  Additional Notes (Optional)
+                  {pl.introCallModal.notesLabel}
                 </label>
                 <textarea
                   id="notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Any specific questions or topics you'd like to discuss?"
+                  placeholder={pl.introCallModal.notesPlaceholder}
                   rows={3}
                   className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
                   disabled={isSubmitting}
@@ -297,7 +297,7 @@ export default function IntroCallModal({
                 disabled={isSubmitting}
                 className="flex-1 px-4 py-3 border border-neutral-300 rounded-lg font-semibold hover:bg-neutral-50 transition-colors disabled:opacity-50"
               >
-                Back
+                {pl.introCallModal.back}
               </button>
               <button
                 type="submit"
@@ -307,10 +307,10 @@ export default function IntroCallModal({
                 {isSubmitting ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin" />
-                    Submitting...
+                    {pl.introCallModal.submitting}
                   </>
                 ) : (
-                  'Schedule Call'
+                  pl.introCallModal.scheduleCall
                 )}
               </button>
             </div>

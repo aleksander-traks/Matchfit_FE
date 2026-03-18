@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../lib/api';
+import { pl } from '../lib/i18n/pl';
 import { ArrowLeft, Send, User, Check, CheckCheck } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import Toast from '../components/Toast';
@@ -92,7 +93,7 @@ export default function TrainerChat() {
       setMessages((prev) => [...prev, message]);
       setNewMessage('');
     } catch (error: any) {
-      setToast({ message: error.message || 'Failed to send message', type: 'error' });
+      setToast({ message: error.message || pl.trainerChat.sendError, type: 'error' });
     } finally {
       setIsSending(false);
     }
@@ -109,8 +110,8 @@ export default function TrainerChat() {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) return 'Today';
-    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    if (date.toDateString() === today.toDateString()) return pl.trainerChat.today;
+    if (date.toDateString() === yesterday.toDateString()) return pl.trainerChat.yesterday;
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
@@ -138,7 +139,7 @@ export default function TrainerChat() {
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading conversation...</p>
+          <p className="text-neutral-600">{pl.trainerChat.loading}</p>
         </div>
       </div>
     );
@@ -162,7 +163,7 @@ export default function TrainerChat() {
               <h2 className="text-sm font-bold text-neutral-900 truncate">
                 {clientEmail || `Client ${clientProfileId?.slice(0, 8)}...`}
               </h2>
-              <p className="text-xs text-neutral-500">Replying as {expert?.name}</p>
+              <p className="text-xs text-neutral-500">{pl.trainerChat.replyingAsLabel(expert?.name || '')}</p>
             </div>
           </div>
         </div>
@@ -171,7 +172,7 @@ export default function TrainerChat() {
           <div className="max-w-2xl mx-auto px-4 py-4 space-y-4">
             {messages.length === 0 && (
               <div className="text-center text-neutral-500 py-12 text-sm">
-                No messages yet. The client hasn't sent anything.
+                {pl.trainerChat.noMessages}
               </div>
             )}
 
@@ -230,7 +231,7 @@ export default function TrainerChat() {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder={`Reply as ${expert?.name || 'trainer'}...`}
+              placeholder={pl.trainerChat.replyingAs(expert?.name || 'trainer')}
               className="flex-1 px-4 py-2.5 bg-neutral-100 border border-transparent rounded-xl focus:outline-none focus:border-emerald-300 focus:bg-white transition-colors text-sm"
               disabled={isSending}
             />
@@ -240,7 +241,7 @@ export default function TrainerChat() {
               className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl hover:bg-emerald-700 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed flex items-center gap-1.5 text-sm font-medium"
             >
               <Send className="w-4 h-4" />
-              <span className="hidden sm:inline">Send</span>
+              <span className="hidden sm:inline">{pl.trainerChat.send}</span>
             </button>
           </form>
         </div>

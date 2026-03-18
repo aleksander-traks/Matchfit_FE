@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
+import { pl } from '../lib/i18n/pl';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, Send, Check, CheckCheck } from 'lucide-react';
 import EmailCollectionModal from '../components/EmailCollectionModal';
@@ -114,10 +115,10 @@ export default function Chat() {
       setPendingMessage(null);
       if (!clientEmail) {
         setClientEmail(email);
-        setToast({ message: "Email saved! You'll be notified when your trainer responds.", type: 'success' });
+        setToast({ message: pl.chat.emailSaved, type: 'success' });
       }
     } catch (error: any) {
-      setToast({ message: error.message || 'Failed to send message', type: 'error' });
+      setToast({ message: error.message || pl.chat.sendError, type: 'error' });
     } finally {
       setIsSending(false);
     }
@@ -140,8 +141,8 @@ export default function Chat() {
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
 
-    if (date.toDateString() === today.toDateString()) return 'Today';
-    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+    if (date.toDateString() === today.toDateString()) return pl.chat.today;
+    if (date.toDateString() === yesterday.toDateString()) return pl.chat.yesterday;
     return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
@@ -166,7 +167,7 @@ export default function Chat() {
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading chat...</p>
+          <p className="text-neutral-600">{pl.chat.loading}</p>
         </div>
       </div>
     );
@@ -200,10 +201,10 @@ export default function Chat() {
 
             <div className="flex-1 min-w-0">
               <h2 className="text-sm font-bold text-neutral-900 truncate">
-                {expert?.name || 'Your Trainer'}
+                {expert?.name || pl.chat.yourTrainer}
               </h2>
               <p className="text-xs text-neutral-500 truncate">
-                {expert?.specialization || 'Personal Trainer'}
+                {expert?.specialization || pl.chat.personalTrainer}
               </p>
             </div>
           </div>
@@ -222,8 +223,8 @@ export default function Chat() {
                     </span>
                   )}
                 </div>
-                <p className="text-neutral-600 font-medium">{expert?.name || 'Your Trainer'}</p>
-                <p className="text-neutral-400 text-sm mt-1">Send a message to start the conversation</p>
+                <p className="text-neutral-600 font-medium">{expert?.name || pl.chat.yourTrainer}</p>
+                <p className="text-neutral-400 text-sm mt-1">{pl.chat.emptyStateHint}</p>
               </div>
             )}
 
@@ -294,7 +295,7 @@ export default function Chat() {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Message your trainer..."
+              placeholder={pl.chat.placeholder}
               className="flex-1 px-4 py-2.5 bg-neutral-100 border border-transparent rounded-xl focus:outline-none focus:border-emerald-300 focus:bg-white transition-colors text-sm"
               disabled={isSending}
             />
@@ -304,7 +305,7 @@ export default function Chat() {
               className="bg-emerald-600 text-white px-4 py-2.5 rounded-xl hover:bg-emerald-700 transition-colors disabled:bg-neutral-300 disabled:cursor-not-allowed flex items-center gap-1.5 text-sm font-medium"
             >
               <Send className="w-4 h-4" />
-              <span className="hidden sm:inline">Send</span>
+              <span className="hidden sm:inline">{pl.chat.send}</span>
             </button>
           </form>
         </div>
@@ -317,8 +318,8 @@ export default function Chat() {
           setPendingMessage(null);
         }}
         onSubmit={handleEmailSubmit}
-        title="Stay Connected"
-        message="We'll notify you when your trainer responds to your message."
+        title={pl.chat.stayConnectedTitle}
+        message={pl.chat.stayConnectedMsg}
       />
 
       {toast && (

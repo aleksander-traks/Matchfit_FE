@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useRealTimeMatching } from '../hooks/useRealTimeMatching';
+import { pl } from '../lib/i18n/pl';
 import ExpertCard from '../components/ExpertCard';
 import MatchingProgress from '../components/MatchingProgress';
 import { api } from '../lib/api';
@@ -78,7 +79,7 @@ export default function RealTimeMatches() {
       storage.setProfileId(profileId);
       navigate('/dashboard');
     } catch (error: any) {
-      alert(error.message || 'Failed to select trainer');
+      alert(error.message || pl.matches.errorTitle);
     }
   };
 
@@ -92,13 +93,13 @@ export default function RealTimeMatches() {
       <div className="min-h-screen bg-neutral-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h2 className="text-xl font-bold text-red-900 mb-2">Error</h2>
+            <h2 className="text-xl font-bold text-red-900 mb-2">{pl.matches.errorTitle}</h2>
             <p className="text-red-700">{error}</p>
             <button
               onClick={() => navigate('/intake/step3')}
               className="mt-4 bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700 transition-colors"
             >
-              Go Back
+              {pl.matches.goBack}
             </button>
           </div>
         </div>
@@ -114,7 +115,7 @@ export default function RealTimeMatches() {
           <p className="text-neutral-600">
             {matchingPhase === 'complete'
               ? `We found ${experts.length} trainers that match your goals and needs`
-              : 'Analyzing trainers to find your perfect match...'}
+              : pl.matches.analyzingTrainers}
           </p>
         </div>
 
@@ -155,7 +156,7 @@ export default function RealTimeMatches() {
         {experts.length === 0 && matchingPhase !== 'idle' && (
           <div className="text-center py-12">
             <div className="animate-pulse text-neutral-400">
-              <div className="text-lg">Loading trainers...</div>
+              <div className="text-lg">{pl.matches.loadingTrainers}</div>
             </div>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { Check, Loader2 } from 'lucide-react';
 import type { MatchingPhase } from '../hooks/useRealTimeMatching';
+import { pl } from '../lib/i18n/pl';
 
 interface MatchingProgressProps {
   phase: MatchingPhase;
@@ -17,33 +18,33 @@ export default function MatchingProgress({
   completedReasonsCount,
 }: MatchingProgressProps) {
   const phases = [
-    { id: 'loading-experts', label: 'Loading trainers', completed: progress >= 15 },
-    { id: 'calculating-scores', label: 'Calculating compatibility', completed: progress >= 85 },
-    { id: 'sorting', label: 'Ranking results', completed: progress >= 90 },
-    { id: 'calculating-reasons', label: 'Generating insights', completed: progress >= 100 },
+    { id: 'loading-experts', label: pl.matchingProgress.loadingTrainers, completed: progress >= 15 },
+    { id: 'calculating-scores', label: pl.matchingProgress.calculatingCompatibility, completed: progress >= 85 },
+    { id: 'sorting', label: pl.matchingProgress.rankingResults, completed: progress >= 90 },
+    { id: 'calculating-reasons', label: pl.matchingProgress.generatingInsights, completed: progress >= 100 },
   ];
 
   const getStatusText = () => {
     switch (phase) {
       case 'loading-experts':
-        return 'Loading trainers from database...';
+        return pl.matchingProgress.statusLoadingTrainers;
       case 'calculating-scores':
-        return `Calculating compatibility scores... (${completedScoresCount}/${totalExperts})`;
+        return pl.matchingProgress.statusCalculating(completedScoresCount, totalExperts);
       case 'sorting':
-        return 'Ranking trainers by match score...';
+        return pl.matchingProgress.statusRanking;
       case 'calculating-reasons':
-        return `Generating personalized recommendations... (${completedReasonsCount}/${totalExperts})`;
+        return pl.matchingProgress.statusGenerating(completedReasonsCount, totalExperts);
       case 'complete':
-        return 'All matches calculated successfully!';
+        return pl.matchingProgress.statusComplete;
       default:
-        return 'Preparing to match...';
+        return pl.matchingProgress.statusPreparing;
     }
   };
 
   return (
     <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-neutral-900">Finding Your Perfect Match</h3>
+        <h3 className="text-lg font-semibold text-neutral-900">{pl.matchingProgress.title}</h3>
         <span className="text-2xl font-bold text-emerald-600">{Math.round(progress)}%</span>
       </div>
 

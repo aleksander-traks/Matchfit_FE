@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useIntake } from '../../context/IntakeContext';
+import { pl } from '../../lib/i18n/pl';
 import ProgressIndicator from '../../components/ProgressIndicator';
 import MultiSelect from '../../components/MultiSelect';
 import { CITIES_OPTIONS, MONTHLY_BUDGET_OPTIONS } from '../../constants/referenceData';
@@ -39,18 +40,18 @@ export default function IntakeStep2() {
 
         <div className="bg-white rounded-lg shadow-sm p-6 space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-neutral-900 mb-3">Age</label>
+            <label className="block text-sm font-semibold text-neutral-900 mb-3">{pl.intake.step2.ageLabel}</label>
             <input
               type="number"
               value={age}
               onChange={(e) => setAge(e.target.value)}
-              placeholder="Enter your age"
+              placeholder={pl.intake.step2.agePlaceholder}
               className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-neutral-900 mb-3">Gender</label>
+            <label className="block text-sm font-semibold text-neutral-900 mb-3">{pl.intake.step2.genderLabel}</label>
             <div className="space-y-2">
               {['Male', 'Female', 'Other'].map((g) => (
                 <label key={g} className="flex items-center gap-3 cursor-pointer">
@@ -61,7 +62,7 @@ export default function IntakeStep2() {
                     onChange={() => setGender(g)}
                     className="w-5 h-5"
                   />
-                  <span className="text-neutral-900">{g}</span>
+                  <span className="text-neutral-900">{g === 'Male' ? pl.intake.step2.genderMale : g === 'Female' ? pl.intake.step2.genderFemale : pl.intake.step2.genderOther}</span>
                 </label>
               ))}
               {gender === 'Other' && (
@@ -69,7 +70,7 @@ export default function IntakeStep2() {
                   type="text"
                   value={customGender}
                   onChange={(e) => setCustomGender(e.target.value)}
-                  placeholder="Please specify"
+                  placeholder={pl.intake.step2.genderSpecify}
                   className="w-full px-4 py-3 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 mt-2"
                 />
               )}
@@ -78,20 +79,20 @@ export default function IntakeStep2() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Where do you live? (Select one or more)
+              {pl.intake.step2.locationLabel}
             </label>
             <MultiSelect
               options={CITIES_OPTIONS}
               value={livingArea}
               onChange={setLivingArea}
-              placeholder="Select cities"
+              placeholder={pl.intake.step2.locationPlaceholder}
               allowOther={true}
             />
           </div>
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Monthly budget for training (Select all that apply)
+              {pl.intake.step2.budgetLabel}
             </label>
             <div className="flex flex-wrap gap-2">
               {MONTHLY_BUDGET_OPTIONS.map((budget) => (
@@ -118,10 +119,10 @@ export default function IntakeStep2() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Preferred days for training (Select all that apply)
+              {pl.intake.step2.daysLabel}
             </label>
             <div className="flex flex-wrap gap-2">
-              {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((day) => (
+              {(['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const).map((day) => (
                 <button
                   key={day}
                   onClick={() => {
@@ -137,7 +138,7 @@ export default function IntakeStep2() {
                       : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
                   }`}
                 >
-                  {day}
+                  {pl.intake.step2.days[day]}
                 </button>
               ))}
             </div>
@@ -145,7 +146,7 @@ export default function IntakeStep2() {
 
           <div>
             <label className="block text-sm font-semibold text-neutral-900 mb-3">
-              Training format preference (Select all that apply)
+              {pl.intake.step2.formatLabel}
             </label>
             <div className="flex flex-wrap gap-2">
               {['On site', 'Remote'].map((coop) => (
@@ -168,7 +169,7 @@ export default function IntakeStep2() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-neutral-500 mt-2">Tip: Select both for hybrid training options</p>
+            <p className="text-xs text-neutral-500 mt-2">{pl.intake.step2.formatTip}</p>
           </div>
 
           <div className="flex gap-3">
@@ -176,13 +177,13 @@ export default function IntakeStep2() {
               onClick={() => navigate('/intake/step1')}
               className="flex-1 bg-neutral-200 text-neutral-700 py-3 rounded-lg font-semibold hover:bg-neutral-300 transition-colors"
             >
-              Back
+              {pl.intake.step2.back}
             </button>
             <button
               onClick={handleNext}
               className="flex-1 bg-emerald-600 text-white py-3 rounded-lg font-semibold hover:bg-emerald-700 transition-colors"
             >
-              Next
+              {pl.intake.step2.next}
             </button>
           </div>
         </div>
