@@ -107,7 +107,7 @@ export default function Dashboard() {
               {trainer.name && (
                 <h3 className="text-2xl font-bold text-neutral-900 mb-1">{trainer.name}</h3>
               )}
-              <p className="text-emerald-600 font-semibold mb-2">{trainer.specialization}</p>
+              <p className="text-emerald-600 font-semibold mb-2">{trainer.specialization ? trainer.specialization.split(',').map((s: string) => pl.expertCard.specializationMap[s.trim()] ?? s.trim()).join(', ') : ''}</p>
               <div className="flex items-center gap-4 text-sm text-neutral-600">
                 <span className="flex items-center gap-1">
                   <Award className="w-4 h-4" />
@@ -219,7 +219,7 @@ export default function Dashboard() {
                       {expert.name && (
                         <h4 className="font-semibold text-neutral-900">{expert.name}</h4>
                       )}
-                      <p className="text-sm text-emerald-600">{expert.specialization}</p>
+                      <p className="text-sm text-emerald-600">{expert.specialization ? expert.specialization.split(',').map((s: string) => pl.expertCard.specializationMap[s.trim()] ?? s.trim()).join(', ') : ''}</p>
                       <p className="text-xs text-neutral-600">
                         {expert.years_of_experience} {pl.dashboard.years} • {matchPercentage}% {pl.dashboard.matchLabel}
                       </p>
@@ -260,7 +260,7 @@ export default function Dashboard() {
                       )}
                       {dashboard.profile.gender && (
                         <div className="text-neutral-600">
-                          <span className="font-medium">{pl.dashboard.gender}</span> {dashboard.profile.gender}
+                          <span className="font-medium">{pl.dashboard.gender}</span> {pl.referenceData.gender[dashboard.profile.gender] ?? dashboard.profile.gender}
                         </div>
                       )}
                       {(!dashboard.profile.age && !dashboard.profile.gender) && (
@@ -276,14 +276,14 @@ export default function Dashboard() {
                     <h3 className="font-semibold text-neutral-900 text-sm mb-2">{pl.dashboard.trainingProfile}</h3>
                     <div className="space-y-1 text-sm">
                       <div className="text-neutral-600">
-                        <span className="font-medium">{pl.dashboard.experience}</span> {dashboard.profile.training_experience}
+                        <span className="font-medium">{pl.dashboard.experience}</span> {pl.referenceData.experience[dashboard.profile.training_experience] ?? dashboard.profile.training_experience}
                       </div>
                       <div className="text-neutral-600">
                         <span className="font-medium">{pl.dashboard.sessionsPerWeek}</span> {dashboard.profile.sessions_per_week}
                       </div>
                       {dashboard.profile.weight_goal && (
                         <div className="text-neutral-600">
-                          <span className="font-medium">{pl.dashboard.weightGoal}</span> {dashboard.profile.weight_goal}
+                          <span className="font-medium">{pl.dashboard.weightGoal}</span> {pl.referenceData.weightGoal[dashboard.profile.weight_goal] ?? dashboard.profile.weight_goal}
                         </div>
                       )}
                       {dashboard.profile.goals && dashboard.profile.goals.length > 0 && (
@@ -292,7 +292,7 @@ export default function Dashboard() {
                           <div className="flex flex-wrap gap-1 mt-1">
                             {dashboard.profile.goals.map((goal: string, idx: number) => (
                               <span key={idx} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs">
-                                {goal}
+                                {pl.referenceData.goals[goal] ?? goal}
                               </span>
                             ))}
                           </div>
@@ -309,7 +309,7 @@ export default function Dashboard() {
                     <div className="space-y-1 text-sm">
                       {dashboard.profile.chronic_diseases && dashboard.profile.chronic_diseases.length > 0 ? (
                         <div className="text-neutral-600">
-                          <span className="font-medium">{pl.dashboard.chronicConditions}</span> {dashboard.profile.chronic_diseases.join(', ')}
+                          <span className="font-medium">{pl.dashboard.chronicConditions}</span> {dashboard.profile.chronic_diseases.map((d: string) => pl.referenceData.chronicDiseases[d] ?? d).join(', ')}
                         </div>
                       ) : (
                         <div className="text-neutral-600">
@@ -318,7 +318,7 @@ export default function Dashboard() {
                       )}
                       {dashboard.profile.injuries && dashboard.profile.injuries.length > 0 ? (
                         <div className="text-neutral-600">
-                          <span className="font-medium">{pl.dashboard.injuries}</span> {dashboard.profile.injuries.join(', ')}
+                          <span className="font-medium">{pl.dashboard.injuries}</span> {dashboard.profile.injuries.map((i: string) => pl.referenceData.injuries[i] ?? i).join(', ')}
                         </div>
                       ) : (
                         <div className="text-neutral-600">
@@ -347,7 +347,7 @@ export default function Dashboard() {
                       )}
                       {dashboard.profile.cooperation && dashboard.profile.cooperation.length > 0 ? (
                         <div className="text-neutral-600">
-                          <span className="font-medium">{pl.dashboard.trainingFormat}</span> {Array.isArray(dashboard.profile.cooperation) ? dashboard.profile.cooperation.join(', ') : dashboard.profile.cooperation}
+                          <span className="font-medium">{pl.dashboard.trainingFormat}</span> {Array.isArray(dashboard.profile.cooperation) ? dashboard.profile.cooperation.map((c: string) => pl.referenceData.cooperation[c] ?? c).join(', ') : (pl.referenceData.cooperation[dashboard.profile.cooperation] ?? dashboard.profile.cooperation)}
                         </div>
                       ) : (
                         <div className="text-neutral-600">
@@ -369,7 +369,7 @@ export default function Dashboard() {
                           <div className="flex flex-wrap gap-1 mt-1">
                             {(Array.isArray(dashboard.profile.availability) ? dashboard.profile.availability : [dashboard.profile.availability]).map((day: string, idx: number) => (
                               <span key={idx} className="inline-block bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs">
-                                {day}
+                                {pl.intake.step2.days[day as keyof typeof pl.intake.step2.days] ?? day}
                               </span>
                             ))}
                           </div>

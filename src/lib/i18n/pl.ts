@@ -238,6 +238,10 @@ export const pl = {
       'Swimming': 'Pływanie',
       'Running': 'Bieganie',
       'Cycling': 'Kolarstwo',
+      'Sports Performance Training': 'Trening wydajności sportowej',
+      'Mobility': 'Mobilność',
+      'Bodyweight Training': 'Trening z masą ciała',
+      'Weight loss': 'Redukcja wagi',
     } as Record<string, string>,
   },
   matchingProgress: {
@@ -301,6 +305,11 @@ export const pl = {
     error: 'Coś poszło nie tak. Spróbuj ponownie.',
   },
   referenceData: {
+    gender: {
+      'Male': 'Mężczyzna',
+      'Female': 'Kobieta',
+      'Other': 'Inna',
+    } as Record<string, string>,
     goals: {
       'Less Pain': 'Mniej bólu',
       'Move Easier': 'Łatwiejszy ruch',
