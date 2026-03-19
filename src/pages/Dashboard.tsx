@@ -120,15 +120,15 @@ export default function Dashboard() {
           <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
             <div className="flex items-center gap-2 text-neutral-700">
               <DollarSign className="w-4 h-4" />
-              <span>{trainer.monthly_budget}</span>
+              <span>{trainer.monthly_budget ? trainer.monthly_budget.replace('PLN/session', 'PLN/sesję') : ''}</span>
             </div>
             <div className="flex items-center gap-2 text-neutral-700">
               <Calendar className="w-4 h-4" />
-              <span>{trainer.availability}</span>
+              <span>{trainer.availability ? trainer.availability.split(',').map((d: string) => pl.intake.step2.days[d.trim() as keyof typeof pl.intake.step2.days] ?? d.trim()).join(', ') : ''}</span>
             </div>
             <div className="flex items-center gap-2 text-neutral-700">
               <MapPin className="w-4 h-4" />
-              <span>{trainer.cooperation}</span>
+              <span>{pl.referenceData.cooperation[trainer.cooperation] ?? trainer.cooperation}</span>
             </div>
           </div>
 

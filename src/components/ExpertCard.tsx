@@ -82,11 +82,11 @@ export default function ExpertCard({ expert, position, isAnimating, onChoose, on
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-3 text-sm">
         <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
           <DollarSign className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">{expert.monthly_budget}</span>
+          <span className="truncate">{expert.monthly_budget ? expert.monthly_budget.replace('PLN/session', 'PLN/sesję') : ''}</span>
         </div>
         <div className="flex items-center gap-2 text-neutral-700 rounded-lg bg-neutral-50 px-3 py-2">
           <MapPin className="w-4 h-4 flex-shrink-0" />
-          <span className="truncate">{expert.cooperation}</span>
+          <span className="truncate">{pl.referenceData.cooperation[expert.cooperation] ?? expert.cooperation}</span>
         </div>
       </div>
 
